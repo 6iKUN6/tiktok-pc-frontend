@@ -1,0 +1,8 @@
+# 检查是否有未暂存的更改
+if ! git diff --quiet && ! git diff --cached --quiet; then
+  echo "你有未暂存的更改，请先暂存或 stash 这些更改。"
+  exit 1
+fi
+
+# 如果没有未暂存的更改，执行 lint-staged
+npx lint-staged
