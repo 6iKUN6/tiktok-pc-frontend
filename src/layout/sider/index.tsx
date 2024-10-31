@@ -1,10 +1,12 @@
 import { Layout } from 'antd';
 import { FC } from 'react';
 
+import Divider from './divider';
 import Menu from './menu/menu';
-import { menuList } from './menu/menuList';
+import { baseMenuList, orderMenuList, bottomMenuList } from './menu/menuList';
 
 import { useSiderStore } from '@/store';
+import './index.less';
 
 const { Sider } = Layout;
 const { Item } = Menu;
@@ -12,16 +14,35 @@ const { Item } = Menu;
 const SiderComp: FC = () => {
   const { currSiderIndex, setSider } = useSiderStore();
   return (
-    <Sider>
+    <Sider className="sider-box">
       <Menu>
-        {menuList.map(({ title, icon }, index) => (
+        {baseMenuList.map(({ title, icon, activeIcon, id }) => (
           <Item
             title={title}
             icon={icon}
-            key={index}
-            active={index === currSiderIndex}
-            onClick={() => setSider(index)}
+            activeIcon={activeIcon}
+            key={id}
+            active={id === currSiderIndex}
+            onClick={() => setSider(id)}
           />
+        ))}
+      </Menu>
+      <Divider />
+      <Menu>
+        {orderMenuList.map(({ title, icon, activeIcon, id }) => (
+          <Item
+            title={title}
+            icon={icon}
+            activeIcon={activeIcon}
+            key={id}
+            active={id === currSiderIndex}
+            onClick={() => setSider(id)}
+          />
+        ))}
+      </Menu>
+      <Menu className="bottom-menu">
+        {bottomMenuList.map(({ title, icon, activeIcon, id }) => (
+          <Item title={title} icon={icon} activeIcon={activeIcon} key={id} />
         ))}
       </Menu>
     </Sider>

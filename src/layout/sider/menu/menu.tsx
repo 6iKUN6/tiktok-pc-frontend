@@ -1,26 +1,26 @@
-import { FC } from 'react';
+import { FC, HTMLAttributes } from 'react';
 import './index.less';
 
-interface MenuProps {
+import type { IMenuItem } from './menuList';
+
+interface MenuProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-const Menu: { Item: FC<MenuItemProps> } & FC<MenuProps> = ({ children }) => {
-  return <div className="menu">{children}</div>;
+const Menu: { Item: FC<MenuItemProps> } & FC<MenuProps> = ({ children, className = '' }) => {
+  return <div className={`menu ${className}`}>{children}</div>;
 };
 
-interface MenuItemProps {
-  title: string;
-  icon?: React.ReactNode;
+interface MenuItemProps extends Partial<IMenuItem> {
   active?: boolean;
   onClick?: () => void;
 }
 
-const MenuItem: FC<MenuItemProps> = ({ title, icon, active, onClick }) => {
+const MenuItem: FC<MenuItemProps> = ({ title, icon, activeIcon, active, onClick }) => {
   return (
     <div className={`menu-item ${active && 'is-active'}`} onClick={onClick}>
+      <span className="icon-node">{active ? activeIcon : icon}</span>
       <span>{title}</span>
-      <span>{icon}</span>
     </div>
   );
 };
