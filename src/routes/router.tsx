@@ -1,7 +1,7 @@
 import { ReactElement, useEffect } from 'react';
 import { message } from 'antd';
 
-import storage from '@/tools/storage';
+import storage from '@/utils/storage';
 // import { useNavigate } from 'react-router-dom';
 
 interface IRoute {
@@ -25,7 +25,7 @@ const PrivateRoute = ({ children }: IRoute) => {
       if (tokenObj === null || isPast48Hours(tokenObj.expired)) {
         message.warning('token过期,请重新登录'); //打开登录窗
       }
-    } catch (error) {
+    } catch (error: any) {
       message.warning('token过期,请重新登录', error);
     }
   }, []);

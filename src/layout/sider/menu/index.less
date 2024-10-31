@@ -2,6 +2,7 @@
   position: relative;
   box-sizing: border-box;
   padding: 0 10px;
+  width: 100%;
   .is-active {
     background-color: rgba(#fff, 0.1);
     color: #fff;
@@ -9,6 +10,8 @@
 }
 
 .menu-item {
+  display: flex;
+  align-items: center;
   background-color: transparent;
   width: 100%;
   cursor: pointer;
@@ -16,11 +19,17 @@
   text-align: center;
   margin: 3px 0;
   padding: 10px 0;
+  padding-left: 40px;
   transition: 300ms;
   color: #999;
   border-radius: 20px;
   &:hover {
     background-color: rgba(#fff, 0.1);
     color: #fff;
+  }
+  .icon-node {
+    display: flex;
+    align-items: center;
+    margin: 0 5px;
   }
 }
