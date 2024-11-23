@@ -48,6 +48,7 @@
 - 2.写代码
 - 3.git add .
 - 4.pnpm run commit 并按照提示添加提交备注
-- 5.上gitee提交pr请求合并代码
+- 5.git push origin feat/xxx(分支名)。(有fork仓库的话要先指定远程仓库：git remote add origin https://gitee.com/xxx/xxx.git)
+- 6.上gitee提交pr请求合并代码
 
 格式有问题请跑：pnpm run format、pnpm run lint:fix
