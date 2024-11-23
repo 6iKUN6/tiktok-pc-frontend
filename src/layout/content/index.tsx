@@ -5,14 +5,27 @@ import VideoPlayer from '@/components/videoPlayer';
 
 import './index.less';
 const videosMock = [
-  { src: 'https://media.w3.org/2010/05/sintel/trailer.mp4', type: 'video/mp4' },
-  { src: 'https://www.w3schools.com/html/mov_bbb.mp4', type: 'video/mp4' },
-  { src: 'http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', type: 'video/mp4' },
+  {
+    id: 1,
+    src: 'https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4',
+    type: 'video/mp4',
+  },
+  // {
+  //   id: 2,
+  //   src: 'https://www.w3schools.com/html/movie.mp4',
+  //   type: 'video/mp4',
+  // },
+  // {
+  //   id: 3,
+  //   src: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  //   type: 'video/mp4',
+  // },
 ];
 
 const { Content } = Layout;
 const ContentComp: FC = () => {
-  const [videos] = useState<Array<{ src: string; type: string }>>(videosMock);
+  const [videos] = useState<Array<{ id: number; src: string; type: string }>>(videosMock);
+
   return (
     <Content className="content-box">
       <div className="body">

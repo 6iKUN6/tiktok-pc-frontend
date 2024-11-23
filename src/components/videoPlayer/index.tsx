@@ -1,98 +1,87 @@
-import { FC, useEffect, useRef, useState } from 'react';
-import videojs from 'video.js';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { FC, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { Carousel } from 'antd';
+
+import Player from './component/player';
 
 import 'video.js/dist/video-js.css';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 import './index.less';
-import { options } from './config';
 
-// 定义VideoPlayerProps接口，用于组件的props类型
+import { throttle } from '@/utils/debouneAndThrottle';
+
 interface VideoPlayerProps {
-  videos: Array<{ src: string; type: string }>;
+  videos: Array<{ id: number; src: string; type: string }>;
 }
 
-// 定义Player类型，用于videojs实例
-type Player = ReturnType<typeof videojs>;
-
-// VideoPlayer组件定义
 const VideoPlayer: FC<VideoPlayerProps> = ({ videos }) => {
-  // 当前激活的视频索引
-  const [activeIndex, setActiveIndex] = useState(0);
-  // 存储视频元素引用的数组
-  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
-  // 存储videojs实例的数组
-  const [playerInstances, setPlayerInstances] = useState<Array<Player | null>>([]);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const carouselRef = useRef<any>(null);
+  const isInteracting = useRef<boolean>(false);
 
-  // 初始化videojs实例和清理
+  const handleSlideChange = useCallback((currentSlide: number) => {
+    setActiveIndex(currentSlide);
+    setIsLoading(true);
+  }, []);
+
+  const handleLoadedData = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
-    videos.forEach((video, index) => {
-      if (videoRefs.current[index] && !playerInstances[index]) {
-        const player = videojs(videoRefs.current[index]!, {
-          ...options,
-          sources: [video],
-          autoplay: index === activeIndex,
-          loop: true,
-        });
-        setPlayerInstances((prev) => {
-          const newInstances = [...prev];
-          newInstances[index] = player;
-          return newInstances;
-        });
+    const handleKeyDown = throttle((event: KeyboardEvent) => {
+      isInteracting.current = true;
+      if (event.key === 'ArrowUp') {
+        carouselRef.current?.prev();
+      } else if (event.key === 'ArrowDown') {
+        carouselRef.current?.next();
       }
-    });
+    }, 100);
 
-    // 组件卸载时清理videojs实例
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      playerInstances.forEach((player) => {
-        if (player) {
-          player.dispose();
-        }
-      });
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [videos, activeIndex, playerInstances]);
+  }, []);
 
-  // 处理滑动切换事件
-  const handleSlideChange = (swiper: any) => {
-    setActiveIndex(swiper.activeIndex);
-    playerInstances.forEach((player, index) => {
-      if (player) {
-        if (index === swiper.activeIndex) {
-          player.play();
-        } else {
-          player.pause();
-        }
-      }
-    });
-  };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemHeight = useMemo(() => {
+    if (containerRef.current) {
+      return containerRef.current.clientHeight;
+    }
 
-  // 渲染组件
+    return 0;
+  }, [containerRef]);
+
   return (
-    <div className="douyin-container">
-      <Swiper
-        direction="vertical"
-        navigation
-        pagination={{ clickable: true }}
-        modules={[Navigation, Pagination]}
-        onSlideChange={handleSlideChange}
-        className="douyin-swiper"
+    <div className="douyin-container" ref={containerRef}>
+      <Carousel
+        ref={carouselRef}
+        vertical
+        dots={false}
+        afterChange={handleSlideChange}
+        className="douyin-carousel"
       >
-        {videos.map((_, index) => (
-          <SwiperSlide key={index}>
-            <div className="video-wrapper">
-              <video
-                ref={(el) => (videoRefs.current[index] = el)}
-                className="video-js vjs-big-play-centered douyin-video"
-              >
-                <p className="vjs-no-js">视频无法播放，请升级浏览器或下载插件</p>
-              </video>
+        {videos.map((video, index) => (
+          <div key={video.id} style={{ width: '100%', height: itemHeight }}>
+            <div style={{ color: '#fff' }}>{`${index}:${video.src}`}</div>
+            <div className="video-wrapper" style={{ height: itemHeight }}>
+              {isLoading && index === activeIndex && (
+                <div className="loading-animation">加载中...</div>
+              )}
+              {/* 外壳套在video组件上，video暴露方法，在外壳控制video的播放，进度条等。外壳可能还需要点赞，评论，分享之类的 */}
+              {/* 下面是video组件 */}
+              <Player
+                id={video.id}
+                src={video.src}
+                type={video.type}
+                isActive={index === activeIndex && isInteracting.current}
+                onLoadedData={handleLoadedData}
+              />
             </div>
-          </SwiperSlide>
+          </div>
         ))}
-      </Swiper>
+      </Carousel>
     </div>
   );
 };
