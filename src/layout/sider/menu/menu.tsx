@@ -1,5 +1,5 @@
 import { FC, HTMLAttributes } from 'react';
-import './index.less';
+import './index.scss';
 
 import type { IMenuItem } from './menuList';
 

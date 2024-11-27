@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-import './index.less';
+import './index.scss';
 
 const Logo: FC = () => {
   return (

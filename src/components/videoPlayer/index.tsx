@@ -1,10 +1,10 @@
-import { FC, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { FC, useEffect, useRef, useState, useCallback } from 'react';
 import { Carousel } from 'antd';
 
 import Player from './component/player';
 
 import 'video.js/dist/video-js.css';
-import './index.less';
+import './index.scss';
 
 import { throttle } from '@/utils/debouneAndThrottle';
 
@@ -17,6 +17,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({ videos }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const carouselRef = useRef<any>(null);
   const isInteracting = useRef<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [itemHeight, setItemHeight] = useState<number>(0);
 
   const handleSlideChange = useCallback((currentSlide: number) => {
     setActiveIndex(currentSlide);
@@ -44,15 +46,13 @@ const VideoPlayer: FC<VideoPlayerProps> = ({ videos }) => {
     };
   }, []);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const itemHeight = useMemo(() => {
+  useEffect(() => {
     if (containerRef.current) {
-      return containerRef.current.clientHeight;
+      setItemHeight(containerRef.current.clientHeight);
     }
+  }, []);
 
-    return 0;
-  }, [containerRef]);
-
+  console.log('itemHeight', itemHeight);
   return (
     <div className="douyin-container" ref={containerRef}>
       <Carousel
@@ -64,10 +64,12 @@ const VideoPlayer: FC<VideoPlayerProps> = ({ videos }) => {
       >
         {videos.map((video, index) => (
           <div key={video.id} style={{ width: '100%', height: itemHeight }}>
-            <div style={{ color: '#fff' }}>{`${index}:${video.src}`}</div>
-            <div className="video-wrapper" style={{ height: itemHeight }}>
+            <div className="video-wrapper" style={{ height: itemHeight, backgroundColor: 'red' }}>
+              <div style={{ color: '#fff' }}>{`${index}:${video.src}`}</div>
               {isLoading && index === activeIndex && (
-                <div className="loading-animation">加载中...</div>
+                <div className="loading-animation" style={{ color: '#fff' }}>
+                  加载中...
+                </div>
               )}
               {/* 外壳套在video组件上，video暴露方法，在外壳控制video的播放，进度条等。外壳可能还需要点赞，评论，分享之类的 */}
               {/* 下面是video组件 */}

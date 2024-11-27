@@ -6,7 +6,7 @@ import Menu from './menu/menu';
 import { baseMenuList, orderMenuList, bottomMenuList } from './menu/menuList';
 
 import { useSiderStore } from '@/store';
-import './index.less';
+import './index.scss';
 
 const { Sider } = Layout;
 const { Item } = Menu;

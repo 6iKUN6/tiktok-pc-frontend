@@ -5,7 +5,7 @@ import { PiUserCircleDuotone } from 'react-icons/pi';
 import HeaderMenu from './menu';
 import { menuList } from './menu/menuList';
 
-import './index.less';
+import './index.scss';
 
 const User: FC = () => {
   return (

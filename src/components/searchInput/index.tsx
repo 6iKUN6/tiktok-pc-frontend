@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Input, Space, Button, ConfigProvider } from 'antd';
 
 import theme from './theme';
-import './index.less';
+import './index.scss';
 
 const SearchInp: FC = () => {
   return (

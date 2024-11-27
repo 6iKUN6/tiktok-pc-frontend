@@ -2,7 +2,7 @@ import { FC } from 'react';
 
 import { IHeaderMenu } from './menuList';
 
-import './index.less';
+import './index.scss';
 
 interface IMenuProps {
   children?: React.ReactNode;

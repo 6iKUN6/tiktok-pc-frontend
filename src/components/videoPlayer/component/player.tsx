@@ -1,6 +1,8 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+
+import { options } from '../config';
 
 interface PlayerProps {
   id: number;
@@ -13,42 +15,59 @@ interface PlayerProps {
 const Player: FC<PlayerProps> = ({ id, src, type, isActive, onLoadedData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<ReturnType<typeof videojs> | null>(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
-    const player = videojs(videoRef.current, {
-      sources: [{ src, type }],
-      autoplay: isActive,
-      loop: true,
-      controls: true,
-      fluid: true,
-      aspectRatio: '16:9',
-      preload: 'auto',
-    });
 
-    player.on('loadeddata', () => {
-      onLoadedData?.();
-    });
+    const initPlayer = async () => {
+      try {
+        const player = videojs(videoRef.current!, options);
+        player.on('loadeddata', () => {
+          onLoadedData?.();
+          setIsPlayerReady(true);
+        });
+        playerRef.current = player;
+      } catch (error) {
+        console.error('初始化视频播放器时出错:', error);
+      }
+    };
 
-    playerRef.current = player;
+    initPlayer();
 
     return () => {
       if (playerRef.current) {
-        playerRef.current.dispose();
+        try {
+          playerRef.current.dispose();
+        } catch (error) {
+          console.error('清理视频播放器时出错:', error);
+        }
       }
     };
-  }, [src, type, isActive, onLoadedData]);
+  }, [src, type, onLoadedData]);
 
   useEffect(() => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !isPlayerReady) return;
+
+    const handlePlay = async () => {
+      try {
+        await playerRef.current?.play();
+      } catch (error) {
+        console.error('播放视频时出错:', error);
+      }
+    };
 
     if (isActive) {
-      playerRef.current.play();
+      handlePlay();
     } else {
       playerRef.current.pause();
-      playerRef.current.reset();
+      try {
+        playerRef.current.currentTime(0);
+      } catch (error) {
+        console.error('重置视频时出错:', error);
+      }
     }
-  }, [isActive]);
+  }, [isActive, isPlayerReady]);
 
   return (
     <div data-vjs-player style={{ width: '100%', height: '100%' }}>
@@ -57,6 +76,7 @@ const Player: FC<PlayerProps> = ({ id, src, type, isActive, onLoadedData }) => {
         className="video-js vjs-big-play-centered douyin-video"
         style={{ objectFit: 'cover' }}
         id={`video-${id}`}
+        preload="metadata"
       >
         <source src={src} type={type} />
         <p className="vjs-no-js">视频无法播放，请升级浏览器或下载插件</p>

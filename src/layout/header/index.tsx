@@ -5,7 +5,7 @@ import Logo from '@/components/logo';
 import SearchInp from '@/components/searchInput';
 import User from '@/components/user';
 
-import './index.less';
+import './index.scss';
 
 const { Header } = Layout;
 const HeaderComp: FC = () => {
