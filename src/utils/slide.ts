@@ -2,16 +2,16 @@ import { ReactNode } from 'react';
 
 //参考文献https://juejin.cn/post/7361614921519054883
 export interface SlideProps {
-  children: ReactNode; //要滚动的页面
-  name: string; //组件名称
-  index: number; //当前下标
-  virtualTotal: number; //页面中同时存在多少个SlideItem
-  render: (item: ReactNode, index: number, play: boolean, uniqueId: string) => ReactNode; //渲染函数
-  list: []; //数据列表
-  active: boolean; //是否激活
-  loading: boolean; //是否加载中
-  uniqueId: string; //唯一ID
-  onLoadMore: () => void; //加载更多
+  children?: ReactNode; //要滚动的页面
+  name?: string; //组件名称
+  index?: number; //当前下标
+  virtualTotal?: number; //页面中同时存在多少个SlideItem
+  render?: (item: ReactNode, index: number, play: boolean, uniqueId: string) => ReactNode; //渲染函数
+  list: Array<any>; //数据列表
+  active?: boolean; //是否激活
+  loading?: boolean; //是否加载中
+  uniqueId?: string; //唯一ID
+  onLoadMore?: () => void; //加载更多
 }
 export interface SlideState {
   judgeValue: number; //一个用于判断滑动朝向的固定值
@@ -49,17 +49,22 @@ export function checkEvent(e: any) {
 
 //初始化信息，获取slide dom的长宽、子元素数量，用于move事件判断能否滑动
 export function slideInit(el: HTMLDivElement, state: SlideState) {
-  state.wrapper.width = +el.style.width.replace('px', '');
-  state.wrapper.height = +el.style.height.replace('px', '');
+  console.log('init-el.style', window.getComputedStyle(el, null)['width']);
+  // state.wrapper.width = +el.style.width.replace('px', '');
+  // state.wrapper.height = +el.style.height.replace('px', '');
+  state.wrapper.width = parseFloat(window.getComputedStyle(el, null)['width']);
+  state.wrapper.height = parseFloat(window.getComputedStyle(el, null)['height']);
   state.wrapper.childrenLength = el.children.length;
 
   //获取偏移量
-  const t = getSilceOffset(state, el);
+  const t = getSliceOffset(state, el);
+  console.log('偏移量t', t);
   let dx1 = 0;
   let dx2 = 0;
   if (state.type === SlideType.HORIZONTAL) dx1 = t;
   else dx2 = t;
   el.style.transform = `translate3d(${dx1}px,${dx2}px,0)`;
+  return `translate3d(${dx1}px,${dx2}px,0)`;
 }
 
 /**
@@ -70,7 +75,7 @@ export function slideInit(el: HTMLDivElement, state: SlideState) {
  */
 //检测在对应方向上能否允许滑动，比如SlideHorizontal组件就只处理左右滑动事件，SlideVertical
 //只处理上下滑动事件
-export function canSlide(state: SlideState) {
+export function canSlide(state: SlideState): boolean {
   // const state = stateRef.current;
   //每次按下都需要检测，up事件会重置为true
   if (state.needCheck) {
@@ -93,6 +98,13 @@ export function canSlide(state: SlideState) {
 }
 
 //slideTouchStart
+/**
+ * 处理滑动开始事件
+ * @param e React.PointerEvent<HTMLDivElement> - 事件对象
+ * @param el HTMLDivElement - 滑动容器元素
+ * @param state SlideState - 滑动状态对象
+ * @returns SlideState - 更新后的滑动状态对象
+ */
 export function slideTouchStart(
   e: React.PointerEvent<HTMLDivElement>,
   el: HTMLDivElement,
@@ -117,13 +129,13 @@ export function canNext(state: SlideState, isNext: boolean) {
 }
 
 /**
- * move事件
- * @param e
- * @param el
- * @param state
- * @param canNextCb 是否能继续滑的回调
- * @param notNextCb 不能继续滑的回调
- * @param slideOtherDirectionCb 滑动其他方向时的回调，目前用于图集进于放大模式后，上下滑动推出放大模式
+ * 处理滑动移动事件
+ * @param e React.PointerEvent<HTMLDivElement> - 事件对象
+ * @param el HTMLDivElement - 滑动容器元素
+ * @param state SlideState - 滑动状态对象
+ * @param canNextCb ((state: SlideState, isNext: boolean) => boolean) | null - 判断是否能继续滑动的回调函数
+ * @param notNextCb (() => void) | null - 不能继续滑动时的回调函数
+ * @param slideOtherDirectionCb (() => void) | null - 滑动其他方向时的回调函数
  */
 export function slideTouchMove(
   e: React.PointerEvent<HTMLDivElement>,
@@ -157,7 +169,7 @@ export function slideTouchMove(
       e.stopPropagation();
       //   if (state.type === SlideType.HORIZONTAL) {
       //   }
-      const t = getSilceOffset(state, el) + (isNext ? state.judgeValue : -state.judgeValue);
+      const t = getSliceOffset(state, el) + (isNext ? state.judgeValue : -state.judgeValue);
       let dx1 = 0,
         dx2 = 0;
       if (state.type === SlideType.HORIZONTAL) {
@@ -176,7 +188,14 @@ export function slideTouchMove(
   }
 }
 
-//slideTouchEnd
+/**
+ * 处理滑动结束事件
+ * @param e React.PointerEvent<HTMLDivElement> - 事件对象
+ * @param state SlideState - 滑动状态对象
+ * @param canNextCb ((state: SlideState, isNext: boolean) => boolean) | null - 判断是否能继续滑动的回调函数
+ * @param nextCb ((isNext: boolean) => void) | null - 滑动成功时的回调函数
+ * @param notNextCb (() => void) | null - 滑动失败时的回调函数
+ */
 export function slideTouchEnd(
   e: React.PointerEvent<HTMLDivElement>,
   state: SlideState,
@@ -237,7 +256,7 @@ export function slideReset(
 ) {
   if (!checkEvent(e)) return;
   el.style.transitionDuration = '300ms';
-  const t = getSilceOffset(state, el);
+  const t = getSliceOffset(state, el);
   let dx1 = 0,
     dx2 = 0;
   if (state.type === SlideType.HORIZONTAL) {
@@ -261,13 +280,16 @@ export function slideReset(
 
 //根据当前index，获取slide偏移距离
 //如果每个页面的宽度是相同均为100%，只需要当前index * wrapper的宽（高）度即可： -state.localIndex * state.wrapper.width
-export function getSilceOffset(state: SlideState, el: HTMLDivElement): number {
+export function getSliceOffset(state: SlideState, el: HTMLDivElement): number {
+  // console.log('state', state);
+
   //横竖逻辑基本相同
   if (state.type === SlideType.HORIZONTAL) {
     let widths: number[] = [];
     Array.from(el.children).map((item) => {
       widths.push(item.getBoundingClientRect().width);
     });
+
     //取0到当前index的的子元素宽度
     widths = widths.slice(0, state.localIndex);
     if (widths.length) {
@@ -285,6 +307,8 @@ export function getSilceOffset(state: SlideState, el: HTMLDivElement): number {
         heights.push(item.getBoundingClientRect().height);
       });
       heights = heights.slice(0, state.localIndex);
+      console.log('heights', heights);
+
       if (heights.length) return -heights.reduce((a, b) => a + b);
       return 0;
     }

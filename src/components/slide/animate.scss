@@ -1,0 +1,36 @@
+// 前进动画
+//页面最终/最初的状态：屏幕正中间
+.go-enter-to,
+.go-leave-from {
+  transform: translate3d(0, 0, 0);
+}
+//动画持续时间
+.go-enter-active,
+.go-leave-active {
+  transition: all 0.3s;
+}
+//离去动画，表示离去页面最终的css：屏幕左侧
+.go-leave-to {
+  transform: translate3d(-100%, 0, 0);
+}
+//进入动画，表示进入页面，初始的状态：屏幕右侧
+.go-enter-from {
+  transform: translate3d(100%, 0, 0);
+}
+
+//后退动画
+//和上面同理，只时 css 是反着的而已
+.back-enter-to,
+.back-enter-from {
+  transform: translate3d(0, 0, 0);
+}
+.back-enter-active,
+.back-leave-active {
+  transition: all 0.3s;
+}
+.back-enter-from {
+  transform: translate3d(-100%, 0, 0);
+}
+.back-leave-to {
+  transform: translate3d(100%, 0, 0);
+}
