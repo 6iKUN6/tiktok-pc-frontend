@@ -49,22 +49,23 @@ export function checkEvent(e: any) {
 
 //初始化信息，获取slide dom的长宽、子元素数量，用于move事件判断能否滑动
 export function slideInit(el: HTMLDivElement, state: SlideState) {
-  console.log('init-el.style', window.getComputedStyle(el, null)['width']);
+  // console.log('init-el.style', window.getComputedStyle(el, null)['width']);
   // state.wrapper.width = +el.style.width.replace('px', '');
   // state.wrapper.height = +el.style.height.replace('px', '');
-  state.wrapper.width = parseFloat(window.getComputedStyle(el, null)['width']);
-  state.wrapper.height = parseFloat(window.getComputedStyle(el, null)['height']);
-  state.wrapper.childrenLength = el.children.length;
+  requestAnimationFrame(() => {
+    state.wrapper.width = parseFloat(window.getComputedStyle(el, null)['width']);
+    state.wrapper.height = parseFloat(window.getComputedStyle(el, null)['height']);
+    state.wrapper.childrenLength = el.children.length;
 
-  //获取偏移量
-  const t = getSliceOffset(state, el);
-  console.log('偏移量t', t);
-  let dx1 = 0;
-  let dx2 = 0;
-  if (state.type === SlideType.HORIZONTAL) dx1 = t;
-  else dx2 = t;
-  el.style.transform = `translate3d(${dx1}px,${dx2}px,0)`;
-  return `translate3d(${dx1}px,${dx2}px,0)`;
+    //获取偏移量
+    const t = getSliceOffset(state, el);
+    // console.log('偏移量t', t);
+    let dx1 = 0;
+    let dx2 = 0;
+    if (state.type === SlideType.HORIZONTAL) dx1 = t;
+    else dx2 = t;
+    el.style.transform = `translate3d(${dx1}px,${dx2}px,0)`;
+  });
 }
 
 /**
@@ -76,6 +77,7 @@ export function slideInit(el: HTMLDivElement, state: SlideState) {
 //检测在对应方向上能否允许滑动，比如SlideHorizontal组件就只处理左右滑动事件，SlideVertical
 //只处理上下滑动事件
 export function canSlide(state: SlideState): boolean {
+  // console.log('canSlide', state);
   // const state = stateRef.current;
   //每次按下都需要检测，up事件会重置为true
   if (state.needCheck) {
@@ -84,11 +86,13 @@ export function canSlide(state: SlideState): boolean {
       //放大再相除，根据长宽比判断方向，angle大于1就是左右滑动，小于是上下滑动
       const angle = (Math.abs(state.move.x) * 10) / (Math.abs(state.move.y) * 10);
       //根据当前slide的类型，判断能否滑动，并记录下来，后续不再判断，直接返回记录值
-      state = {
-        ...state,
-        next: state.type === SlideType.HORIZONTAL ? angle > 1 : angle <= 1,
-        needCheck: false,
-      };
+      // state = {
+      //   ...state,
+      //   next: state.type === SlideType.HORIZONTAL ? angle > 1 : angle <= 1,
+      //   needCheck: false,
+      // };
+      state.next = state.type === SlideType.HORIZONTAL ? angle > 1 : angle <= 1;
+      state.needCheck = false;
     } else {
       return false;
     }
@@ -113,11 +117,15 @@ export function slideTouchStart(
   const { clientX, clientY } = e;
   el.style.transitionDuration = '0ms';
   //记录起点坐标，用于move事件计算移动距离,记录按下时间，用于up事件判断滑动时间
-  state = {
-    ...state,
-    start: { x: clientX, y: clientY, time: Date.now() },
-    isDown: true,
-  };
+  // state = {
+  //   ...state,
+  //   start: { x: clientX, y: clientY, time: Date.now() },
+  //   isDown: true,
+  // };//破案了nmb，不能直接给新对象。。。闭包。。2024.12.12
+  state.isDown = true;
+  state.start = { x: clientX, y: clientY, time: Date.now() };
+  // console.log('slideTouchStart-state', state.isDown);
+
   return state;
 }
 
@@ -145,20 +153,24 @@ export function slideTouchMove(
   notNextCb: (() => void) | null = null,
   slideOtherDirectionCb: (() => void) | null = null,
 ) {
-  // const state = stateRef.current;
   if (!checkEvent(e)) return;
   if (!state.isDown) return;
+  // console.log('slideTouchMove-state', state.isDown);
+
   //计算移动距离
   const x = e.pageX - state.start.x;
   const y = e.pageY - state.start.y;
-  state = {
-    ...state,
-    move: { x, y },
-  };
+  // state = {
+  //   ...state,
+  //   move: { x, y },
+  // };
+  state.move.x = x;
+  state.move.y = y;
   //检测能不能滑动
   const canSlideRes = canSlide(state);
   //是否向下或向右滑动
-  const isNext = state.type === SlideType.HORIZONTAL ? x > 0 : y > 0;
+  const isNext = state.type === SlideType.HORIZONTAL ? state.move.x < 0 : state.move.y < 0;
+  // console.log('isNext', state.move.x, state.move.y, isNext);
   if (canSlideRes) {
     //如果传了就用，没传就用默认的
     //无限滑动组件，要特别判断，所以需要传canNextCb
@@ -180,6 +192,7 @@ export function slideTouchMove(
 
       el.style.transitionDuration = '0ms';
       el.style.transform = `translate(${dx1}px,${dx2}px)`;
+      // console.log('state-move-move', state);
     } else {
       notNextCb?.();
     }
@@ -204,13 +217,16 @@ export function slideTouchEnd(
   notNextCb: (() => void) | null = null,
 ) {
   if (!checkEvent(e)) return;
+  // console.log('slideTouchEnd-state', state.isDown);
   if (!state.isDown) return;
-
+  console.log('slideTouchEnd-state.next', state.next);
   if (state.next) {
     const isHorizontal = state.type === SlideType.HORIZONTAL;
     const isNext = isHorizontal ? state.move.x < 0 : state.move.y < 0;
+
     //同move事件
     if (!canNextCb) canNextCb = canNext;
+    // console.log('end-canNext', canNextCb(state, isNext), isNext);
     if (canNextCb(state, isNext)) {
       //结合时间、距离来判断是否成功滑动
       const endTime = Date.now();
@@ -219,19 +235,31 @@ export function slideTouchEnd(
       const judgeValue = isHorizontal ? state.wrapper.width : state.wrapper.height;
 
       //1.距离太短，直接不通过
-      if (Math.abs(distance) < judgeValue * 0.5) gapTime = 1000;
+      // if (Math.abs(distance) < judgeValue * 0.5) gapTime = 1000;
+      if (Math.abs(distance) < 20) {
+        gapTime = 1000;
+        // console.log('flag-1');
+      }
+
       //2.距离太长，直接通过
-      if (Math.abs(distance) > judgeValue / 3) gapTime = 100;
+      if (Math.abs(distance) > judgeValue / 3) {
+        gapTime = 100;
+        // console.log('flag-2');
+      }
+
       //3.若不在上述两种情况，则根据时间判断，时间越短，滑动越快，通过
       if (gapTime < 150) {
         if (isNext) {
           state.localIndex++;
+          // console.log('flag-3');
         } else {
           state.localIndex--;
+          // console.log('flag-4');
         }
 
         return nextCb?.(isNext);
       } else {
+        // console.log('flag-5');
         return notNextCb?.();
       }
     } else {

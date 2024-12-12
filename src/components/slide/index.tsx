@@ -47,23 +47,35 @@ const Slide: FC<SlideProps> = ({
   });
 
   useEffect(() => {
-    if (wrapperRef.current) {
-      console.log(slideInit(wrapperRef.current, stateRef.current));
-    }
+    const calculateOffset = () => {
+      if (wrapperRef.current) {
+        slideInit(wrapperRef.current, stateRef.current);
+        // console.log('Calculated Offset:', calculatedOffset);
+      }
+    };
+
+    // 异步计算偏移量
+    const timer = setTimeout(calculateOffset, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const touchStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
     if (!wrapperRef.current) return;
     slideTouchStart(e, wrapperRef.current, stateRef.current);
   };
 
   const touchMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
     if (!wrapperRef.current) return;
     slideTouchMove(e, wrapperRef.current, stateRef.current, canNext);
   };
 
   const touchEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
     if (!wrapperRef.current) return;
+    // console.log('wrapperRef.current', wrapperRef.current);
+
     // const isNext = stateRef.current.move.y < 0;
     // if (
     //   stateRef.current.localIndex === 0 &&
@@ -74,6 +86,7 @@ const Slide: FC<SlideProps> = ({
     // }
     slideTouchEnd(e, stateRef.current, canNext, (isNext) => {
       // const half = parseInt((virtualTotal / 2).toString());
+      console.log('isNext', isNext);
       if (list.length > virtualTotal) {
         //手指往上滑(即列表展示下一条视频)
         if (isNext) {
@@ -92,6 +105,8 @@ const Slide: FC<SlideProps> = ({
 
   function swipeItem(option: Option) {
     const half = parseInt((virtualTotal / 2).toString());
+    // console.log('stateRef', stateRef.current);
+
     if (option === 'next') {
       //删除最前面的 `dom` ，然后在最后面添加一个 `dom`
       if (
@@ -252,15 +267,16 @@ const Slide: FC<SlideProps> = ({
     }
   }, [list, insertContent]);
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (e.key === 'ArrowUp') {
-      // 上键逻辑
-      swipeItem('prev');
-    } else if (e.key === 'ArrowDown') {
-      // 下键逻辑
-      swipeItem('next');
-    }
-  }
+  // function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+  //   // console.log('e', e);
+  //   if (e.key === 'ArrowUp') {
+  //     // 上键逻辑
+  //     swipeItem('prev');
+  //   } else if (e.key === 'ArrowDown') {
+  //     // 下键逻辑
+  //     swipeItem('next');
+  //   }
+  // }
 
   return (
     <div className="slide slide-infinite">
@@ -270,7 +286,7 @@ const Slide: FC<SlideProps> = ({
         onPointerDown={touchStart}
         onPointerMove={touchMove}
         onPointerUp={touchEnd}
-        onKeyUp={handleKeyDown}
+        // onKeyUp={handleKeyDown}
       >
         {children}
       </div>
