@@ -52,25 +52,6 @@ const Slide: FC<SlideProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    const oldList = stateRef.current.wrapper.childrenLength;
-    if (list.length < oldList) {
-      stateRef.current.localIndex = 0;
-      insertContent();
-    } else {
-      //没数据就直接插入
-      if (oldList === 0) {
-        // stateRef.current.wrapper.childrenLength = list.length;
-        insertContent();
-      } else {
-        // 走到这里，说明是通过接口加载了下一页的数据，
-        // 为了在用户快速滑动时，无需频繁等待请求接口加载数据，给用户更好的使用体验
-        // 这里额外加载3条数据。所以此刻，html里面有原本的5个加新增的3个，一共8个dom
-        // 用户往下滑动时只删除前面多余的dom，等滑动到临界值（virtualTotal/2+1）时，再去执行新增逻辑
-      }
-    }
-  }, [list, insertContent]);
-
   const touchStart = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!wrapperRef.current) return;
     slideTouchStart(e, wrapperRef.current, stateRef.current);
@@ -249,9 +230,27 @@ const Slide: FC<SlideProps> = ({
       // bus.emit(EVENT_KEY.CURRENT_ITEM, props.list[state.localIndex]);
     },
     [virtualTotal, list, getInsEl],
+    //为什么不用Array.prototype.map来生成子元素？，然后操作list来增减item
   );
 
-  //为什么不用Array.prototype.map来生成子元素？，然后操作list来增减item
+  useEffect(() => {
+    const oldList = stateRef.current.wrapper.childrenLength;
+    if (list.length < oldList) {
+      stateRef.current.localIndex = 0;
+      insertContent();
+    } else {
+      //没数据就直接插入
+      if (oldList === 0) {
+        // stateRef.current.wrapper.childrenLength = list.length;
+        insertContent();
+      } else {
+        // 走到这里，说明是通过接口加载了下一页的数据，
+        // 为了在用户快速滑动时，无需频繁等待请求接口加载数据，给用户更好的使用体验
+        // 这里额外加载3条数据。所以此刻，html里面有原本的5个加新增的3个，一共8个dom
+        // 用户往下滑动时只删除前面多余的dom，等滑动到临界值（virtualTotal/2+1）时，再去执行新增逻辑
+      }
+    }
+  }, [list, insertContent]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'ArrowUp') {
