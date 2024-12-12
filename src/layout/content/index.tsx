@@ -39,10 +39,22 @@ const ContentComp: FC = () => {
       backgroundColor: 'yellow',
       text: '3',
     },
+    {
+      backgroundColor: 'green',
+      text: '4',
+    },
+    {
+      backgroundColor: 'blue',
+      text: '5',
+    },
+    {
+      backgroundColor: 'purple',
+      text: '6',
+    },
   ]);
 
   const renderFn = useCallback((item: any, index: number, play: boolean, uniqueId: string) => {
-    console.log('renderFn', item, index, play, uniqueId);
+    // console.log('renderFn', item, index, play, uniqueId);
     return (
       <div
         key={uniqueId}
@@ -52,6 +64,7 @@ const ContentComp: FC = () => {
       </div>
     );
   }, []);
+  // const [index, setIndex] = useState<number>(0);//这个index需要和外部双向绑定
   return (
     <Content className="content-box">
       <div className="body">
@@ -63,6 +76,7 @@ const ContentComp: FC = () => {
             console.log('onLoadMore');
           }}
           uniqueId={'1'}
+          index={0}
           render={renderFn}
         ></Slide>
       </div>
