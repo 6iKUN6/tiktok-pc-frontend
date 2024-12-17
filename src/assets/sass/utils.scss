@@ -1,0 +1,138 @@
+//一些变量
+// // Width in pixels
+// $width: 500;
+// @while $width >= 0 {
+//   .w#{$width}p {
+//     width: #{$width}px !important;
+//   }
+//   $width: $width - 10;
+// }
+
+// // Width in percentage (Note: math.percentage is not a valid Sass function)
+// $width: 100;
+// @while $width >= 0 {
+//   .w#{$width} {
+//     width: percentage($width / 100) !important; // Corrected to percentage function
+//   }
+//   $width: $width - 1;
+// }
+
+// // Height in pixels
+// $height: 500;
+// @while $height >= 0 {
+//   .h#{$height}p {
+//     height: #{$height}px !important;
+//   }
+//   $height: $height - 10;
+// }
+
+// // Height in percentage (Note: math.percentage is not a valid Sass function)
+// $height: 100;
+// @while $height >= 0 {
+//   .h#{$height} {
+//     height: percentage($height / 100) !important; // Corrected to percentage function
+//   }
+//   $height: $height - 1;
+// }
+
+// Margin
+@mixin m($n) {
+  @for $i from 1 through $n {
+    .m#{$i}r {
+      margin: (10px * $i) !important;
+    }
+  }
+}
+@include m(5);
+
+@mixin ml($n) {
+  @for $i from 1 through $n {
+    .ml#{$i}r {
+      margin-left: (10px * $i) !important;
+    }
+  }
+}
+@include ml(5);
+
+@mixin mr($n) {
+  @for $i from 1 through $n {
+    .mr#{$i}r {
+      margin-right: (10px * $i) !important;
+    }
+  }
+}
+@include mr(5);
+
+@mixin mt($n) {
+  @for $i from 1 through $n {
+    .mt#{$i}r {
+      margin-top: (10px * $i) !important;
+    }
+  }
+}
+@include mt(5);
+
+@mixin mb($n) {
+  @for $i from 0 through $n {
+    .mb#{$i}r {
+      margin-bottom: (10px * $i) !important;
+    }
+  }
+}
+@include mb(7);
+
+// Padding
+@mixin p($n) {
+  @for $i from 1 through $n {
+    .p#{$i}r {
+      padding: (10px * $i) !important;
+    }
+  }
+}
+@include p(5);
+
+@mixin pb($n) {
+  @for $i from 1 through $n {
+    .pb#{$i}r {
+      padding-bottom: (10px * $i) !important;
+    }
+  }
+}
+@include pb(5);
+
+@mixin pt($n) {
+  @for $i from 1 through $n {
+    .pt#{$i}r {
+      padding-top: (10px * $i) !important;
+    }
+  }
+}
+@include pt(5);
+
+@mixin pl($n) {
+  @for $i from 1 through $n {
+    .pl#{$i}r {
+      padding-left: (10px * $i) !important;
+    }
+  }
+}
+@include pl(5);
+
+@mixin pr($n) {
+  @for $i from 1 through $n {
+    .pr#{$i}r {
+      padding-right: (10px * $i) !important;
+    }
+  }
+}
+@include pr(5);
+
+// Font size
+@mixin f($n) {
+  @for $i from 10 through $n {
+    .f#{$i} {
+      font-size: (1px * $i) !important;
+    }
+  }
+}
+@include f(40);
