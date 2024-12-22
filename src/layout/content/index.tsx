@@ -1,32 +1,16 @@
 import { Layout } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 // import VideoPlayer from '@/components/videoPlayer';
 import Slide from '@/components/slide';
-
 import './index.scss';
-// const videosMock = [
-//   {
-//     id: 1,
-//     src: 'https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4',
-//     type: 'video/mp4',
-//   },
-//   {
-//     id: 2,
-//     src: 'https://www.w3schools.com/html/movie.mp4',
-//     type: 'video/mp4',
-//   },
-//   {
-//     id: 3,
-//     src: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
-//     type: 'video/mp4',
-//   },
-// ];
+import { getRecommendedVideos } from '@/services/apis';
+// import { slideItemRender } from '@/utils';
+// import { HttpStatus } from '@/utils/constant';
 
 const { Content } = Layout;
 const ContentComp: FC = () => {
-  // const [videos] = useState<Array<{ id: number; src: string; type: string }>>(videosMock);
-  const [list] = useState([
+  const [list2] = useState([
     {
       backgroundColor: 'pink',
       text: '1',
@@ -51,33 +35,156 @@ const ContentComp: FC = () => {
       backgroundColor: 'purple',
       text: '6',
     },
+    {
+      backgroundColor: 'red',
+      text: '7',
+    },
+    {
+      backgroundColor: 'orange',
+      text: '8',
+    },
+    {
+      backgroundColor: 'brown',
+      text: '9',
+    },
+    {
+      backgroundColor: 'grey',
+      text: '10',
+    },
+    {
+      backgroundColor: 'black',
+      text: '11',
+    },
+    {
+      backgroundColor: 'white',
+      text: '12',
+    },
+    {
+      backgroundColor: 'pink',
+      text: '13',
+    },
+    {
+      backgroundColor: 'skyblue',
+      text: '14',
+    },
+    {
+      backgroundColor: 'yellow',
+      text: '15',
+    },
+    {
+      backgroundColor: 'green',
+      text: '16',
+    },
+    {
+      backgroundColor: 'blue',
+      text: '17',
+    },
+    {
+      backgroundColor: 'purple',
+      text: '18',
+    },
+    {
+      backgroundColor: 'red',
+      text: '19',
+    },
+    {
+      backgroundColor: 'orange',
+      text: '20',
+    },
+    {
+      backgroundColor: 'brown',
+      text: '21',
+    },
+    {
+      backgroundColor: 'grey',
+      text: '22',
+    },
+    {
+      backgroundColor: 'black',
+      text: '23',
+    },
+    {
+      backgroundColor: 'white',
+      text: '24',
+    },
+    {
+      backgroundColor: 'pink',
+      text: '25',
+    },
+    {
+      backgroundColor: 'skyblue',
+      text: '26',
+    },
+    {
+      backgroundColor: 'yellow',
+      text: '27',
+    },
+    {
+      backgroundColor: 'green',
+      text: '28',
+    },
+    {
+      backgroundColor: 'blue',
+      text: '29',
+    },
+    {
+      backgroundColor: 'purple',
+      text: '30',
+    },
   ]);
 
-  const renderFn = useCallback((item: any, index: number, play: boolean, uniqueId: string) => {
-    // console.log('renderFn', item, index, play, uniqueId);
-    return (
-      <div
-        key={uniqueId}
-        style={{ width: '100%', height: '100%', backgroundColor: item.backgroundColor }}
-      >
-        {item.text}
-      </div>
-    );
+  const [list, setList] = useState([]);
+  const pageStateRef = useRef({
+    pageNo: 1,
+    pageSize: 10,
+    totalSize: 0,
+    currentSize: 0,
+  });
+
+  // const render = slideItemRender({});
+
+  const getData = useCallback(function getData(refresh = false) {
+    const { totalSize, pageNo, pageSize, currentSize } = pageStateRef.current;
+    if (!refresh && totalSize === currentSize) return;
+    getRecommendedVideos({
+      page: pageNo,
+      pageSize: pageSize,
+    }).then((res) => {
+      // console.log('res', res);
+      if (res.success) {
+        setList((prevState) => prevState.concat(res.data.list));
+      } else {
+        console.error('request error:', res.success);
+      }
+    });
   }, []);
-  // const [index, setIndex] = useState<number>(0);//这个index需要和外部双向绑定
+
+  useEffect(() => {
+    pageStateRef.current.currentSize = list.length;
+  }, [list.length]);
+
+  useEffect(() => {
+    getData(true);
+  }, [getData]);
+
+  const [index, setIndex] = useState<number>(0); //这个index需要和外部双向绑定
+
+  function updateIndex(newIndex: number) {
+    setIndex(newIndex);
+  }
+
   return (
     <Content className="content-box">
       <div className="body">
         {/* <VideoPlayer videos={videos} /> */}
         <Slide
           name="slide-comp"
-          list={list}
-          onLoadMore={() => {
-            console.log('onLoadMore');
-          }}
-          uniqueId={'1'}
-          index={0}
-          render={renderFn}
+          list={list2}
+          onLoadMore={() => {}}
+          uniqueId={'ikun'}
+          index={index}
+          render={({ backgroundColor, text }) => <div style={{ backgroundColor }}>{text}</div>}
+          updateIndex={updateIndex}
         ></Slide>
       </div>
     </Content>

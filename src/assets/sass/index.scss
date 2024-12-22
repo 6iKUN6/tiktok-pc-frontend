@@ -1,11 +1,8 @@
 //一些变量
-@import 'utils';
-//for循环生成的 margin、padding、width、height类
-@import 'custom';
-//颜色
-@import 'layout';
-//布局
-@import 'anim';
+@use 'utils' as *; //for循环生成的 margin、padding、width、height类
+@use 'custom' as *; //颜色
+@use 'layout' as *; //布局
+@use 'anim' as *;
 
 :root {
   --color-me: rgb(21, 23, 35);

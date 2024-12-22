@@ -1,6 +1,7 @@
 import React, { FC, ReactNode, useEffect, useRef, useCallback } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom/client';
+// import { unmountComponentAtNode } from 'react-dom';
 
 import {
   SlideProps,
@@ -8,7 +9,6 @@ import {
   SlideType,
   slideTouchEnd,
   slideTouchStart,
-  canNext,
   slideTouchMove,
   slideReset,
   slideInit,
@@ -18,6 +18,7 @@ import {
 //页面中同时存在多少个SliceItem
 const itemClassName = 'slide-item';
 const appInsMap = new Map<number, ReactDOM.Root>();
+const realDomMap = new Map<number, Element>();
 
 const Slide: FC<SlideProps> = ({
   children,
@@ -27,10 +28,15 @@ const Slide: FC<SlideProps> = ({
   render = () => null,
   list = [],
   onLoadMore,
+  updateIndex,
   uniqueId,
   // active = false,
   // loading = false,
 }) => {
+  // const [appInsMap, setAppInsMap] = useState(new Map<number, ReactDOM.Root>());
+  // useEffect(() => {
+  //   console.log('list', list);
+  // }, [list]);
   //   const [listState, setListState] = useState(list);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SlideState>({
@@ -45,6 +51,11 @@ const Slide: FC<SlideProps> = ({
     move: { x: 0, y: 0 }, //移动时的坐标
     wrapper: { width: 0, height: 0, childrenLength: 0 }, //slide-list的宽度和子元素数量
   });
+
+  useEffect(() => {
+    stateRef.current.localIndex = index;
+    console.log(`%cindex:${index};localIndex:${stateRef.current.localIndex}`, 'color:red');
+  }, [index]);
 
   useEffect(() => {
     const calculateOffset = () => {
@@ -62,20 +73,20 @@ const Slide: FC<SlideProps> = ({
   const touchStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!wrapperRef.current) return;
+    // console.log('touchStart');
     slideTouchStart(e, wrapperRef.current, stateRef.current);
   };
 
   const touchMove = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!wrapperRef.current) return;
+    // console.log('touchMove');
     slideTouchMove(e, wrapperRef.current, stateRef.current, canNext);
   };
 
   const touchEnd = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!wrapperRef.current) return;
-    // console.log('wrapperRef.current', wrapperRef.current);
-
     // const isNext = stateRef.current.move.y < 0;
     // if (
     //   stateRef.current.localIndex === 0 &&
@@ -84,9 +95,9 @@ const Slide: FC<SlideProps> = ({
     // ) {
     //   emit('refresh');
     // }
+    // console.log('touchEnd');
     slideTouchEnd(e, stateRef.current, canNext, (isNext) => {
       // const half = parseInt((virtualTotal / 2).toString());
-      console.log('isNext', isNext);
       if (list.length > virtualTotal) {
         //手指往上滑(即列表展示下一条视频)
         if (isNext) {
@@ -98,7 +109,7 @@ const Slide: FC<SlideProps> = ({
       }
     });
     //每次滑动结束，重置状态
-    slideReset(e, wrapperRef.current, stateRef.current);
+    slideReset(e, wrapperRef.current, stateRef.current, updateIndex!);
   };
 
   type Option = 'next' | 'prev';
@@ -106,14 +117,15 @@ const Slide: FC<SlideProps> = ({
   function swipeItem(option: Option) {
     const half = parseInt((virtualTotal / 2).toString());
     // console.log('stateRef', stateRef.current);
-
+    // console.log('props-index', index);
+    console.log('swipeItem', option);
     if (option === 'next') {
       //删除最前面的 `dom` ，然后在最后面添加一个 `dom`
       if (
         stateRef.current.localIndex > list.length - virtualTotal &&
         stateRef.current.localIndex > half
       ) {
-        onLoadMore?.();
+        onLoadMore?.(); //到底了就loadmore
       }
 
       //是否符合 `腾挪` 的条件
@@ -129,10 +141,10 @@ const Slide: FC<SlideProps> = ({
         }
 
         //删除最前面的 `dom`
-        const index = wrapperRef.current
-          ?.querySelector(`.${itemClassName}:first-child`)
-          ?.getAttribute('data-index');
-        appInsMap.get(Number(index))?.unmount();
+        const container = wrapperRef.current?.querySelector(`.${itemClassName}:first-child`);
+        const index = container?.getAttribute('data-index');
+        deteleInsEl(Number(index));
+
         wrapperRef.current?.querySelectorAll(`.${itemClassName}`).forEach((item) => {
           (item as HTMLElement).style['top'] =
             (stateRef.current.localIndex - half) * stateRef.current.wrapper.height + 'px';
@@ -150,23 +162,44 @@ const Slide: FC<SlideProps> = ({
             `.${itemClassName}[data-index='${addIndex}']`,
           );
           if (!res) {
-            wrapperRef.current?.appendChild(getInsEl(list[addIndex], addIndex));
+            wrapperRef.current?.prepend(getInsEl(list[addIndex], addIndex));
           }
         }
 
-        const index = wrapperRef.current
-          ?.querySelector(`.${itemClassName}:last-child`)
-          ?.getAttribute('data-index');
-        appInsMap.get(Number(index))?.unmount();
+        const container = wrapperRef.current?.querySelector(`.${itemClassName}:last-child`);
+        const index = container?.getAttribute('data-index');
+        console.log('prev', container, index);
+        deteleInsEl(Number(index));
 
         wrapperRef.current?.querySelectorAll(`.${itemClassName}`).forEach((item) => {
           (item as HTMLElement).style['top'] =
             (stateRef.current.localIndex - half) * stateRef.current.wrapper.height + 'px';
         });
+      } else {
+        console.log('上划');
       }
     }
 
     stateRef.current.wrapper.childrenLength = wrapperRef.current?.children.length || 0;
+  }
+
+  function deteleInsEl(index: number) {
+    // container: Element, wrapper: HTMLDivElement
+    // console.log('appInsMap', appInsMap);
+    const root: ReactDOM.Root | undefined = appInsMap.get(index);
+    if (root) {
+      root.unmount();
+      // wrapper.removeChild(container);
+    }
+
+    const dom: Element | undefined = realDomMap.get(index);
+    if (dom) {
+      dom.remove();
+    }
+    // console.log(appInsMap.get(index), index);
+    // console.log('deteleInsEl', root);
+    // 从appInsMap中移除引用
+    // appInsMap.delete(index);
   }
 
   /**
@@ -186,18 +219,19 @@ const Slide: FC<SlideProps> = ({
       const root = ReactDOM.createRoot(parent);
       root.render(slideVNode);
       appInsMap.set(index, root);
+      realDomMap.set(index, parent);
+
       return parent;
-      // if (wrapperRef.current) {
-      //   const root = ReactDOM.createRoot(wrapperRef.current);
-      //   root.render(
-      //     <SlideItem data-index={index} key={index} play={play} uniqueId={uniqueId}>
-      //       {render(item, index, play, uniqueId!)}
-      //     </SlideItem>,
-      //   );
-      // }
     },
     [render, uniqueId],
   );
+
+  function canNext(state: SlideState, isNext: boolean) {
+    return !(
+      (state.localIndex === 0 && !isNext) ||
+      (state.localIndex === list.length - 1 && isNext)
+    );
+  }
 
   const insertContent = useCallback(
     function () {
