@@ -5,6 +5,7 @@ import Loading from '@/components/Loading/index';
 import type { NormalObject } from '@/types';
 import { SlideVideoPlayStatus } from '@/utils/constant';
 import { _checkImgUrl } from '@/utils';
+// import { EVENT_KEY } from '@/utils/bus';
 
 interface BaseVideoProps {
   item?: NormalObject;
@@ -201,39 +202,190 @@ const BaseVideo: FC<BaseVideoProps> = ({
     };
   });
 
-  // function play() {
+  // function removeMuted() {
   //   setState((prevState) => ({
   //     ...prevState,
-  //     status: SlideVideoPlayStatus.PLAY,
+  //     mute: false,
   //   }));
-  //   if (videoEl.current) {
-  //     videoEl.current.volume = 1;
-  //     videoEl.current.play();
+  // }
+
+  // function onOpenSubType() {
+  //   setState((prevState) => ({
+  //     ...prevState,
+  //     commentVisible: true,
+  //   }));
+  // }
+
+  // function onCloseSubType() {
+  //   setState((prevState) => ({
+  //     ...prevState,
+  //     commentVisible: false,
+  //   }));
+  // }
+
+  // function onDialogMove({ tag, e }: { tag: string; e: string }) {
+  //   if (state.commentVisible && tag === 'comment' && videoEl.current) {
+  //     videoEl.current.style.transitionDuration = `0ms`;
+  //     videoEl.current.style.height = `calc(var(--vh, 1vh) * 30 + ${e}px)`;
   //   }
   // }
 
-  // function pause() {
-  //   setState((prevState) => ({
-  //     ...prevState,
-  //     status: SlideVideoPlayStatus.PAUSE,
-  //   }));
-  //   if (videoEl.current) {
-  //     videoEl.current.pause();
+  // function onDialogEnd({ tag, isClose }: { tag: string; isClose: boolean }) {
+  //   if (state.commentVisible && tag === 'comment') {
+  //     videoEl.current!.style.transitionDuration = `300ms`;
+  //     if (isClose) {
+  //       setState((prevState) => ({
+  //         ...prevState,
+  //         commentVisible: false,
+  //       }));
+  //       videoEl.current!.style.height = `100%`;
+  //     } else {
+  //       videoEl.current!.style.height = `calc(var(--vh, 1vh) * 30)`;
+  //     }
   //   }
   // }
 
-  function touchStart() {}
+  // function onOpenComments(id: string) {
+  //   if (id === item!.aweme_id) {
+  //     videoEl.current!.style.transitionDuration = `300ms`;
+  //     videoEl.current!.style.height = `calc(var(--vh, 1vh) * 30)`;
+  //     setState((prevState) => ({
+  //       ...prevState,
+  //       commentVisible: true,
+  //     }));
+  //   }
+  // }
 
-  function touchMove() {}
+  // function onCloseComments() {
+  //   if (state.commentVisible) {
+  //     videoEl.current!.style.transitionDuration = `300ms`;
+  //     videoEl.current!.style.height = `100%`;
+  //     setState((prevState) => ({
+  //       ...prevState,
+  //       commentVisible: false,
+  //     }));
+  //   }
+  // }
 
-  function touchEnd() {}
+  // function clickFn({ uniqueId, index, type }: { uniqueId: string; index: string; type: string }) {
+  //   if (position.uniqueId === uniqueId && position.index === index) {
+  //     if (type === EVENT_KEY.ITEM_TOGGLE) {
+  //       if (isLive) {
+  //         pause();
+  //         // 跳转
+  //       } else {
+  //         if (state.status === SlideVideoPlayStatus.PLAY) {
+  //           pause();
+  //         } else {
+  //           play();
+  //         }
+  //       }
+  //     }
+
+  //     if (type === EVENT_KEY.ITEM_STOP || type === EVENT_KEY.ITEM_PLAY) {
+  //       videoEl.current!.currentTime = 0;
+  //       // state.ignoreWaiting = true;
+  //       setState((prevState) => ({
+  //         ...prevState,
+  //         ignoreWaiting: true,
+  //       }));
+  //       pause();
+  //       setTimeout(() => {
+  //         setState((prevState) => ({
+  //           ...prevState,
+  //           ignoreWaiting: false,
+  //         }));
+  //       }, 300);
+  //     }
+
+  //     if (type === EVENT_KEY.ITEM_PLAY) {
+  //       videoEl.current!.currentTime = 0;
+  //       setState((prevState) => ({
+  //         ...prevState,
+  //         ignoreWaiting: true,
+  //       }));
+  //       pause();
+  //       setTimeout(() => {
+  //         setState((prevState) => ({
+  //           ...prevState,
+  //           ignoreWaiting: false,
+  //         }));
+  //       });
+  //     }
+  //   }
+  // }
+
+  function play() {
+    setState((prevState) => ({
+      ...prevState,
+      status: SlideVideoPlayStatus.PLAY,
+    }));
+    if (videoEl.current) {
+      videoEl.current.volume = 1;
+      videoEl.current.play();
+    }
+  }
+
+  function pause() {
+    setState((prevState) => ({
+      ...prevState,
+      status: SlideVideoPlayStatus.PAUSE,
+    }));
+    if (videoEl.current) {
+      videoEl.current.pause();
+    }
+  }
+
+  function touchStart(e: React.TouchEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    setState((prevState) => ({
+      ...prevState,
+      start: { x: e.touches[0].pageX },
+      last: { x: prevState.playX, time: prevState.currentTime },
+    }));
+  }
+
+  function touchMove(e: React.TouchEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    setState((prevState) => ({ ...prevState, isMove: true }));
+    pause();
+    const dx = e.touches[0].pageX - state.start.x;
+
+    // 确保在合理范围
+    let newCurrentTime = state.last.time + Math.ceil(Math.ceil(dx) / state.step);
+
+    if (newCurrentTime > state.duration) {
+      newCurrentTime = state.duration;
+    }
+
+    if (newCurrentTime < 0) {
+      newCurrentTime = 0;
+    }
+
+    setState((prevState) => ({
+      ...prevState,
+      playX: prevState.last.x + dx,
+      currentTime: newCurrentTime,
+    }));
+  }
+
+  function touchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    setState((prevState) => ({ ...prevState }));
+    if (isPlaying) return;
+    setTimeout(() => {}, 1000);
+    if (videoEl.current) {
+      videoEl.current.currentTime = state.currentTime;
+    }
+
+    play();
+  }
 
   return (
     <VideoCtx.Provider value={provide}>
       <div className={`video-wrapper ${positionName}`} ref={videoWrapper}>
         {state.loading && <Loading style={{ position: 'absolute' }} />}
         <video
-          src=""
           ref={videoEl}
           autoPlay={isPlay}
           poster={poster}
@@ -241,8 +393,15 @@ const BaseVideo: FC<BaseVideoProps> = ({
           loop
           preload="true"
           playsInline={true}
+          webkit-playsinline={true}
+          x5-video-player-type="h5-page"
+          x5-video-player-fullscreen="false"
+          x5-playsinline={true}
         >
-          <source type="video/mp4" />
+          {item &&
+            item.video.play_addr.url_list.map((urlItem: string, index: number) => (
+              <source key={index} src={urlItem} type="video/mp4" />
+            ))}
           <p>您的浏览器不支持 video 标签。</p>
         </video>
         {!isPlaying && <PlayCircleOutlined className="pause-icon" />}

@@ -72,3 +72,5 @@ export const EVENT_KEY = {
   TOGGLE_CURRENT_VIDEO: 'TOGGLE_CURRENT_VIDEO',
   SHOW_AUDIO_CALL: 'SHOW_AUDIO_CALL',
 };
+
+export type EVENT_KEY_TYPE = keyof typeof EVENT_KEY; // 添加类型定义

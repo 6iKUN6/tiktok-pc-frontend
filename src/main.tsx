@@ -4,6 +4,7 @@ import * as ReactDOMClient from 'react-dom/client';
 
 import App from './App.tsx';
 import './index.css';
+import { runMock } from './mock/index.ts';
 
 //初始化一些变量
 window.isMoved = false;
@@ -46,3 +47,6 @@ root.render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+//数据mock，开发环境上拦截请求，上假数据
+runMock();

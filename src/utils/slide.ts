@@ -5,14 +5,16 @@ export interface SlideProps {
   children?: ReactNode; //要滚动的页面
   name?: string; //组件名称
   index?: number; //当前下标
+  updateIndex?: (i: number) => void;
   virtualTotal?: number; //页面中同时存在多少个SlideItem
-  render?: (item: ReactNode, index: number, play: boolean, uniqueId: string) => ReactNode; //渲染函数
+  render?: (item: any, index: number, play: boolean, uniqueId: string) => ReactNode; //渲染函数
   list: Array<any>; //数据列表
   active?: boolean; //是否激活
   loading?: boolean; //是否加载中
   uniqueId?: string; //唯一ID
   onLoadMore?: () => void; //加载更多
 }
+
 export interface SlideState {
   judgeValue: number; //一个用于判断滑动朝向的固定值
   start: { x: number; y: number; time: number }; //按下时的起点坐标
@@ -25,6 +27,7 @@ export interface SlideState {
   next: boolean; //能否滑动
   isDown: boolean; //是否按下，用于move事件判断
 }
+
 export enum SlideType {
   VERTICAL = 'vertical', //垂直滑动
   HORIZONTAL = 'horizontal', //水平滑动
@@ -45,6 +48,19 @@ export function checkEvent(e: any) {
   }
 
   return true;
+}
+
+/**
+ * 默认能否继续滑动
+ * @param state
+ * @param isNext 朝向，向右或向下
+ * @returns {boolean}
+ */
+function canNext(state: SlideState, isNext: boolean) {
+  return !(
+    (state.localIndex === 0 && !isNext) ||
+    (state.localIndex === state.wrapper.childrenLength - 1 && isNext)
+  );
 }
 
 //初始化信息，获取slide dom的长宽、子元素数量，用于move事件判断能否滑动
@@ -78,7 +94,9 @@ export function slideInit(el: HTMLDivElement, state: SlideState) {
 //只处理上下滑动事件
 export function canSlide(state: SlideState): boolean {
   // console.log('canSlide', state);
+  console.log('canSlide-needcheck', state.needCheck);
   // const state = stateRef.current;
+  // console.log('canSlide-next-上一次', state.next);
   //每次按下都需要检测，up事件会重置为true
   if (state.needCheck) {
     //判断move x和y的距离是否大于判断值，因为距离太小无法判断滑动方向
@@ -129,13 +147,6 @@ export function slideTouchStart(
   return state;
 }
 
-export function canNext(state: SlideState, isNext: boolean) {
-  return !(
-    (state.localIndex === 0 && !isNext) ||
-    (state.localIndex === state.wrapper.childrenLength - 1 && isNext)
-  );
-}
-
 /**
  * 处理滑动移动事件
  * @param e React.PointerEvent<HTMLDivElement> - 事件对象
@@ -171,10 +182,12 @@ export function slideTouchMove(
   //是否向下或向右滑动
   const isNext = state.type === SlideType.HORIZONTAL ? state.move.x < 0 : state.move.y < 0;
   // console.log('isNext', state.move.x, state.move.y, isNext);
+
   if (canSlideRes) {
     //如果传了就用，没传就用默认的
     //无限滑动组件，要特别判断，所以需要传canNextCb
     if (!canNextCb) canNextCb = canNext;
+    // console.log(canNextCb(state, isNext));
     if (canNextCb(state, isNext)) {
       window.isMoved = true;
       //能滑动，那就把事件捕获，不能给父组件处理
@@ -219,7 +232,7 @@ export function slideTouchEnd(
   if (!checkEvent(e)) return;
   // console.log('slideTouchEnd-state', state.isDown);
   if (!state.isDown) return;
-  console.log('slideTouchEnd-state.next', state.next);
+  // console.log('slideTouchEnd-state', state);
   if (state.next) {
     const isHorizontal = state.type === SlideType.HORIZONTAL;
     const isNext = isHorizontal ? state.move.x < 0 : state.move.y < 0;
@@ -280,7 +293,8 @@ export function slideReset(
   e: React.PointerEvent<HTMLDivElement>,
   el: HTMLDivElement,
   state: SlideState,
-  emit: any = null,
+  // emit: any = null,
+  updateIndex: (index: number) => void,
 ) {
   if (!checkEvent(e)) return;
   el.style.transitionDuration = '300ms';
@@ -303,7 +317,9 @@ export function slideReset(
   setTimeout(() => {
     window.isMoved = false;
   }, 200);
-  emit?.('update:index', state.localIndex);
+  //更新localindex
+  // emit?.('update:index', state.localIndex);
+  updateIndex(state.localIndex);
 }
 
 //根据当前index，获取slide偏移距离
@@ -335,7 +351,7 @@ export function getSliceOffset(state: SlideState, el: HTMLDivElement): number {
         heights.push(item.getBoundingClientRect().height);
       });
       heights = heights.slice(0, state.localIndex);
-      console.log('heights', heights);
+      // console.log('heights', heights);
 
       if (heights.length) return -heights.reduce((a, b) => a + b);
       return 0;

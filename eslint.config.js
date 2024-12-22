@@ -32,6 +32,7 @@ export default tseslint.config(
       'array-bracket-spacing': 0, // 方括号
       'no-debugger': 'off',
       'prefer-const': ['error', { destructuring: 'any', ignoreReadBeforeAssign: false }],
+      // "react-hooks/exhaustive-deps": "off",//关闭项目中所有 useCallback 和 useMemo 的依赖项检查
 
       'padding-line-between-statements': [
         'error',
