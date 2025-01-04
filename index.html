@@ -1,18 +1,16 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <!-- Referer携带了我们自身网站的域名，第三方网站认为这是非法访问，所以报错403 forbidden，因此我们需要在自己项目中跳转第三方外链的时候，去掉Referer信息,加上才能访问第三方视频 -->
+    <title>Vite + React + TS</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="referrer" content="no-referrer" />
-  <!-- Referer携带了我们自身网站的域名，第三方网站认为这是非法访问，所以报错403 forbidden，因此我们需要在自己项目中跳转第三方外链的时候，去掉Referer信息,加上才能访问第三方视频 -->
-  <title>Vite + React + TS</title>
-</head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
