@@ -56,7 +56,7 @@ export function checkEvent(e: any) {
  * @param isNext 朝向，向右或向下
  * @returns {boolean}
  */
-function canNext(state: SlideState, isNext: boolean) {
+function canNext(state: SlideState, isNext: boolean): boolean {
   return !(
     (state.localIndex === 0 && !isNext) ||
     (state.localIndex === state.wrapper.childrenLength - 1 && isNext)

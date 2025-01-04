@@ -1,7 +1,6 @@
 import React, { FC, ReactNode, useEffect, useRef, useCallback } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom/client';
-// import { unmountComponentAtNode } from 'react-dom';
 
 import {
   SlideProps,
@@ -14,7 +13,9 @@ import {
   slideInit,
   getSliceOffset,
 } from '@/utils/slide';
+import bus, { EVENT_KEY } from '@/utils/bus';
 
+type Option = 'next' | 'prev';
 //页面中同时存在多少个SliceItem
 const itemClassName = 'slide-item';
 const appInsMap = new Map<number, ReactDOM.Root>();
@@ -37,7 +38,7 @@ const Slide: FC<SlideProps> = ({
   // useEffect(() => {
   //   console.log('list', list);
   // }, [list]);
-  //   const [listState, setListState] = useState(list);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SlideState>({
     judgeValue: 20, //一个用于判断滑动朝向的固定值
@@ -51,17 +52,36 @@ const Slide: FC<SlideProps> = ({
     move: { x: 0, y: 0 }, //移动时的坐标
     wrapper: { width: 0, height: 0, childrenLength: 0 }, //slide-list的宽度和子元素数量
   });
+  const prevIndex = useRef<number>(); //上一个视频的index
 
   useEffect(() => {
-    stateRef.current.localIndex = index;
+    // console.log(`old-index:${prevIndex.current};new-index:${index}`);
+    // stateRef.current.localIndex = index;
+
+    bus.emit(EVENT_KEY.CURRENT_ITEM, list[index]); //当前item
+    bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
+      //监听index变化，控制暂停或播放视频
+      uniqueId: uniqueId,
+      index: index,
+      type: EVENT_KEY.ITEM_PLAY,
+    });
+    setTimeout(() => {
+      bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
+        uniqueId: uniqueId,
+        index: prevIndex.current,
+        type: EVENT_KEY.ITEM_STOP,
+      });
+      prevIndex.current = index;
+    }, 200);
+    // console.log('busmap', bus.eventMap);
+
     console.log(`%cindex:${index};localIndex:${stateRef.current.localIndex}`, 'color:red');
-  }, [index]);
+  }, [index, list, uniqueId]);
 
   useEffect(() => {
     const calculateOffset = () => {
       if (wrapperRef.current) {
         slideInit(wrapperRef.current, stateRef.current);
-        // console.log('Calculated Offset:', calculatedOffset);
       }
     };
 
@@ -112,13 +132,11 @@ const Slide: FC<SlideProps> = ({
     slideReset(e, wrapperRef.current, stateRef.current, updateIndex!);
   };
 
-  type Option = 'next' | 'prev';
-
   function swipeItem(option: Option) {
     const half = parseInt((virtualTotal / 2).toString());
     // console.log('stateRef', stateRef.current);
     // console.log('props-index', index);
-    console.log('swipeItem', option);
+    // console.log('swipeItem', option);
     if (option === 'next') {
       //删除最前面的 `dom` ，然后在最后面添加一个 `dom`
       if (
@@ -168,7 +186,7 @@ const Slide: FC<SlideProps> = ({
 
         const container = wrapperRef.current?.querySelector(`.${itemClassName}:last-child`);
         const index = container?.getAttribute('data-index');
-        console.log('prev', container, index);
+        // console.log('prev', container, index);
         deteleInsEl(Number(index));
 
         wrapperRef.current?.querySelectorAll(`.${itemClassName}`).forEach((item) => {
@@ -176,7 +194,7 @@ const Slide: FC<SlideProps> = ({
             (stateRef.current.localIndex - half) * stateRef.current.wrapper.height + 'px';
         });
       } else {
-        console.log('上划');
+        console.log('上划---无元素增减');
       }
     }
 
@@ -184,12 +202,9 @@ const Slide: FC<SlideProps> = ({
   }
 
   function deteleInsEl(index: number) {
-    // container: Element, wrapper: HTMLDivElement
-    // console.log('appInsMap', appInsMap);
     const root: ReactDOM.Root | undefined = appInsMap.get(index);
     if (root) {
       root.unmount();
-      // wrapper.removeChild(container);
     }
 
     const dom: Element | undefined = realDomMap.get(index);
@@ -276,7 +291,8 @@ const Slide: FC<SlideProps> = ({
       }
 
       stateRef.current.wrapper.childrenLength = wrapperRef.current!.children.length;
-      // bus.emit(EVENT_KEY.CURRENT_ITEM, props.list[state.localIndex]);
+
+      bus.emit(EVENT_KEY.CURRENT_ITEM, list[stateRef.current.localIndex]);
     },
     [virtualTotal, list, getInsEl],
     //为什么不用Array.prototype.map来生成子元素？，然后操作list来增减item
@@ -301,16 +317,20 @@ const Slide: FC<SlideProps> = ({
     }
   }, [list, insertContent]);
 
-  // function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-  //   // console.log('e', e);
-  //   if (e.key === 'ArrowUp') {
-  //     // 上键逻辑
-  //     swipeItem('prev');
-  //   } else if (e.key === 'ArrowDown') {
-  //     // 下键逻辑
-  //     swipeItem('next');
-  //   }
-  // }
+  useEffect(() => {
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp') {
+        //
+      } else if (e.key === 'ArrowDown') {
+        //
+      }
+    };
+
+    document.addEventListener('keyup', handleKeyUp);
+    return () => {
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   return (
     <div className="slide slide-infinite">
@@ -320,7 +340,6 @@ const Slide: FC<SlideProps> = ({
         onPointerDown={touchStart}
         onPointerMove={touchMove}
         onPointerUp={touchEnd}
-        // onKeyUp={handleKeyDown}
       >
         {children}
       </div>
