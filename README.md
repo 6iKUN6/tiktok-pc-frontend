@@ -1,5 +1,8 @@
 # video-platform-front
 
+主要参考：//参考文献https://juejin.cn/post/7361614921519054883
+参考项目地址： https://github.com/zyronon/douyin.git
+
 ### 工程规范：
 
 - commitlint/cli

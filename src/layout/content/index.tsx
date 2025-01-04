@@ -5,133 +5,18 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import Slide from '@/components/slide';
 import './index.scss';
 import { getRecommendedVideos } from '@/services/apis';
-// import { slideItemRender } from '@/utils';
+import { slideItemRender } from '@/utils';
+
 // import { HttpStatus } from '@/utils/constant';
 
 const { Content } = Layout;
+
 const ContentComp: FC = () => {
-  const [list2] = useState([
-    {
-      backgroundColor: 'pink',
-      text: '1',
-    },
-    {
-      backgroundColor: 'skyblue',
-      text: '2',
-    },
-    {
-      backgroundColor: 'yellow',
-      text: '3',
-    },
-    {
-      backgroundColor: 'green',
-      text: '4',
-    },
-    {
-      backgroundColor: 'blue',
-      text: '5',
-    },
-    {
-      backgroundColor: 'purple',
-      text: '6',
-    },
-    {
-      backgroundColor: 'red',
-      text: '7',
-    },
-    {
-      backgroundColor: 'orange',
-      text: '8',
-    },
-    {
-      backgroundColor: 'brown',
-      text: '9',
-    },
-    {
-      backgroundColor: 'grey',
-      text: '10',
-    },
-    {
-      backgroundColor: 'black',
-      text: '11',
-    },
-    {
-      backgroundColor: 'white',
-      text: '12',
-    },
-    {
-      backgroundColor: 'pink',
-      text: '13',
-    },
-    {
-      backgroundColor: 'skyblue',
-      text: '14',
-    },
-    {
-      backgroundColor: 'yellow',
-      text: '15',
-    },
-    {
-      backgroundColor: 'green',
-      text: '16',
-    },
-    {
-      backgroundColor: 'blue',
-      text: '17',
-    },
-    {
-      backgroundColor: 'purple',
-      text: '18',
-    },
-    {
-      backgroundColor: 'red',
-      text: '19',
-    },
-    {
-      backgroundColor: 'orange',
-      text: '20',
-    },
-    {
-      backgroundColor: 'brown',
-      text: '21',
-    },
-    {
-      backgroundColor: 'grey',
-      text: '22',
-    },
-    {
-      backgroundColor: 'black',
-      text: '23',
-    },
-    {
-      backgroundColor: 'white',
-      text: '24',
-    },
-    {
-      backgroundColor: 'pink',
-      text: '25',
-    },
-    {
-      backgroundColor: 'skyblue',
-      text: '26',
-    },
-    {
-      backgroundColor: 'yellow',
-      text: '27',
-    },
-    {
-      backgroundColor: 'green',
-      text: '28',
-    },
-    {
-      backgroundColor: 'blue',
-      text: '29',
-    },
-    {
-      backgroundColor: 'purple',
-      text: '30',
-    },
-  ]);
+  // const TestRender: any = ({ backgroundColor, url }: any) => (
+  //   <div style={{ backgroundColor, width: '100%', height: '100%' }}>
+  //     <video src={url}></video>
+  //   </div>
+  // );
 
   const [list, setList] = useState([]);
   const pageStateRef = useRef({
@@ -141,7 +26,7 @@ const ContentComp: FC = () => {
     currentSize: 0,
   });
 
-  // const render = slideItemRender({});
+  const render = slideItemRender({});
 
   const getData = useCallback(function getData(refresh = false) {
     const { totalSize, pageNo, pageSize, currentSize } = pageStateRef.current;
@@ -179,11 +64,11 @@ const ContentComp: FC = () => {
         {/* <VideoPlayer videos={videos} /> */}
         <Slide
           name="slide-comp"
-          list={list2}
+          list={list}
           onLoadMore={() => {}}
           uniqueId={'ikun'}
           index={index}
-          render={({ backgroundColor, text }) => <div style={{ backgroundColor }}>{text}</div>}
+          render={render}
           updateIndex={updateIndex}
         ></Slide>
       </div>

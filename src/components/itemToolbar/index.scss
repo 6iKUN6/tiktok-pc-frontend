@@ -1,0 +1,94 @@
+.toolbar {
+  //width: 40px;
+  position: absolute;
+  bottom: 0;
+  right: 10rem;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .avatar-ctn {
+    $w: 45rem;
+
+    position: relative;
+
+    .avatar {
+      width: $w;
+      height: $w;
+      border: 3rem solid white;
+      border-radius: 50%;
+    }
+
+    .options {
+      position: absolute;
+      border-radius: 50%;
+      margin: auto;
+      left: 0;
+      right: 0;
+      bottom: -5px;
+      background: red;
+      //background: black;
+      width: 18rem;
+      height: 18rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 1s;
+
+      img {
+        position: absolute;
+        width: 14rem;
+        height: 14rem;
+        transition: all 1s;
+      }
+
+      .yes {
+        opacity: 0;
+        transform: rotate(-180deg);
+      }
+
+      &.attention {
+        background: white;
+
+        .no {
+          opacity: 0;
+          transform: rotate(180deg);
+        }
+
+        .yes {
+          opacity: 1;
+          transform: rotate(0deg);
+        }
+      }
+    }
+  }
+
+  .love,
+  .message,
+  .share {
+    $width: 35rem;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    img {
+      width: $width;
+      height: $width;
+    }
+
+    span {
+      font-size: 12rem;
+    }
+  }
+
+  .icon {
+    font-size: 40rem;
+  }
+
+  .loved {
+    background: red;
+  }
+}

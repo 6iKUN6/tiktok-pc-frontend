@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import * as ReactDOMClient from 'react-dom/client';
 
 import App from './App.tsx';
-import './index.css';
+import './assets/sass/index.scss';
 import { runMock } from './mock/index.ts';
 
 //初始化一些变量
