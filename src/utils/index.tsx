@@ -4,7 +4,6 @@ import BaseVideo from '@/components/baseVideo';
 import { IMG_URL } from '@/config';
 
 export function _checkImgUrl(url: string): string {
-  // console.log(url)
   if (!url) return '';
   //本地图片
   if (

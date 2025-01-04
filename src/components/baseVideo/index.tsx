@@ -155,11 +155,6 @@ const BaseVideo: FC<BaseVideoProps> = memo(
 
       clientSize.current.height = h;
       clientSize.current.width = w;
-      // setState((prevState) => ({
-      //   ...prevState,
-      //   height: h,
-      //   width: w,
-      // }));
 
       const fun = (e: Event) => {
         const target = e.target as HTMLVideoElement;
@@ -310,8 +305,8 @@ const BaseVideo: FC<BaseVideoProps> = memo(
         index: string;
         type: EVENT_KEY_TYPE;
       }) {
+        console.log('click', uniqueId, index, type);
         if (position.uniqueId === uniqueId && position.index === index) {
-          console.log('click', uniqueId, index, type);
           if (type === EVENT_KEY.ITEM_TOGGLE) {
             if (isLive) {
               pause();

@@ -23,6 +23,7 @@ export interface SlideState {
   type: SlideType; //组件类型
   name: string; //组件名称
   localIndex: number; //当前下标
+  prevIndex: number; //上一个视频的index
   needCheck: boolean; //是否需要检测，每次按下都需要检测，up事件会重置为true
   next: boolean; //能否滑动
   isDown: boolean; //是否按下，用于move事件判断
@@ -251,21 +252,21 @@ export function slideTouchEnd(
       // if (Math.abs(distance) < judgeValue * 0.5) gapTime = 1000;
       if (Math.abs(distance) < 20) {
         gapTime = 1000;
-        // console.log('flag-1');
       }
 
       //2.距离太长，直接通过
       if (Math.abs(distance) > judgeValue / 3) {
         gapTime = 100;
-        // console.log('flag-2');
       }
 
       //3.若不在上述两种情况，则根据时间判断，时间越短，滑动越快，通过
       if (gapTime < 150) {
         if (isNext) {
+          state.prevIndex = state.localIndex; //保存上一个的index,再修改
           state.localIndex++;
           // console.log('flag-3');
         } else {
+          state.prevIndex = state.localIndex; //保存上一个的index,再修改
           state.localIndex--;
           // console.log('flag-4');
         }
