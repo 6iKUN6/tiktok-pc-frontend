@@ -44,7 +44,10 @@ const Slide: FC<SlideProps> = ({
     judgeValue: 20, //一个用于判断滑动朝向的固定值
     type: SlideType.VERTICAL_INFINITE, //组件类型
     name: name || '',
+
     localIndex: index, //当前下标
+    prevIndex: -1, //上一个视频的index，初始化负一，防止初始化触发stop
+
     needCheck: true, //是否需要检测，每次按下都需要检测，up事件会重置为true
     next: false, //能否滑动
     isDown: false, //是否按下，用于move事件判断
@@ -52,12 +55,8 @@ const Slide: FC<SlideProps> = ({
     move: { x: 0, y: 0 }, //移动时的坐标
     wrapper: { width: 0, height: 0, childrenLength: 0 }, //slide-list的宽度和子元素数量
   });
-  const prevIndex = useRef<number>(); //上一个视频的index
 
   useEffect(() => {
-    // console.log(`old-index:${prevIndex.current};new-index:${index}`);
-    // stateRef.current.localIndex = index;
-
     bus.emit(EVENT_KEY.CURRENT_ITEM, list[index]); //当前item
     bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
       //监听index变化，控制暂停或播放视频
@@ -68,12 +67,10 @@ const Slide: FC<SlideProps> = ({
     setTimeout(() => {
       bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
         uniqueId: uniqueId,
-        index: prevIndex.current,
+        index: stateRef.current.prevIndex,
         type: EVENT_KEY.ITEM_STOP,
       });
-      prevIndex.current = index;
     }, 200);
-    // console.log('busmap', bus.eventMap);
 
     console.log(`%cindex:${index};localIndex:${stateRef.current.localIndex}`, 'color:red');
   }, [index, list, uniqueId]);
@@ -134,9 +131,6 @@ const Slide: FC<SlideProps> = ({
 
   function swipeItem(option: Option) {
     const half = parseInt((virtualTotal / 2).toString());
-    // console.log('stateRef', stateRef.current);
-    // console.log('props-index', index);
-    // console.log('swipeItem', option);
     if (option === 'next') {
       //删除最前面的 `dom` ，然后在最后面添加一个 `dom`
       if (
