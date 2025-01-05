@@ -5,6 +5,7 @@ import * as ReactDOMClient from 'react-dom/client';
 import App from './App.tsx';
 import './assets/sass/index.scss';
 import { runMock } from './mock/index.ts';
+import bus, { EVENT_KEY } from './utils/bus.ts';
 
 //初始化一些变量
 window.isMoved = false;
@@ -50,3 +51,12 @@ root.render(
 
 //数据mock，开发环境上拦截请求，上假数据
 runMock();
+
+setTimeout(() => {
+  bus.emit(EVENT_KEY.HIDE_MUTED_NOTICE);
+  window.showMutedNotice = false;
+}, 2000);
+//开局注册移除静音方法
+bus.on(EVENT_KEY.REMOVE_MUTED, () => {
+  window.isMuted = false;
+});

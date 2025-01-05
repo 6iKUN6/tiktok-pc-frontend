@@ -1,0 +1,68 @@
+@mixin music {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.music-wrapper {
+  display: flex;
+  justify-content: center;
+  $w: 45rem;
+  width: $w;
+  height: $w;
+  position: relative;
+  .music {
+    @include music;
+    animation: animations 5s linear forwards infinite;
+  }
+
+  @keyframes animations {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .mute-icon {
+    @include music;
+    cursor: pointer;
+    position: absolute;
+    z-index: 1;
+    right: 0;
+    background: white;
+    animation: unset;
+    color: black;
+    transition: all 0.5s;
+    overflow: hidden;
+
+    .wrap {
+      width: 100rem;
+      position: absolute;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &.notice {
+      border-radius: 50rem;
+      width: 100rem;
+    }
+
+    svg {
+      font-size: 22rem;
+    }
+
+    span {
+      margin-left: 5rem;
+      font-size: 13rem;
+      word-break: keep-all;
+      transition: all 0.5s;
+    }
+  }
+}

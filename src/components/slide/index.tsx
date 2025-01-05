@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useEffect, useRef, useCallback } from 'react';
+import React, { FC, ReactNode, useEffect, useRef, useCallback, MouseEvent } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom/client';
 
@@ -14,6 +14,7 @@ import {
   getSliceOffset,
 } from '@/utils/slide';
 import bus, { EVENT_KEY } from '@/utils/bus';
+import { _stopPropagation } from '@/utils';
 
 type Option = 'next' | 'prev';
 //页面中同时存在多少个SliceItem
@@ -313,6 +314,7 @@ const Slide: FC<SlideProps> = ({
 
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
+      _stopPropagation(e);
       if (e.key === 'ArrowUp') {
         //
       } else if (e.key === 'ArrowDown') {
@@ -326,6 +328,15 @@ const Slide: FC<SlideProps> = ({
     };
   }, []);
 
+  const togglePlay = (e: MouseEvent<HTMLDivElement>) => {
+    _stopPropagation(e.nativeEvent);
+    bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
+      uniqueId: uniqueId,
+      index: stateRef.current.localIndex,
+      type: EVENT_KEY.ITEM_TOGGLE,
+    });
+  };
+
   return (
     <div className="slide slide-infinite">
       <div
@@ -334,6 +345,7 @@ const Slide: FC<SlideProps> = ({
         onPointerDown={touchStart}
         onPointerMove={touchMove}
         onPointerUp={touchEnd}
+        onClick={togglePlay}
       >
         {children}
       </div>

@@ -7,7 +7,7 @@ import ItemToolbar from '@/components/itemToolbar';
 import ItemDesc from '@/components/itemDesc';
 import type { NormalObject } from '@/types';
 import { SlideVideoPlayStatus } from '@/utils/constant';
-import { _checkImgUrl, _duration } from '@/utils';
+import { _checkImgUrl, _duration, _stopPropagation } from '@/utils';
 import bus, { EVENT_KEY, EVENT_KEY_TYPE } from '@/utils/bus';
 
 import './index.scss';
@@ -148,6 +148,9 @@ const BaseVideo: FC<BaseVideoProps> = memo(
         item: item || {},
       };
     }, [state.mute, isPlaying, position, item]);
+    useEffect(() => {
+      console.log('state.mute', state.mute);
+    }, [state.mute]);
 
     useEffect(() => {
       const h = document.body.clientHeight;
@@ -218,13 +221,21 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       eventTester('playing', '开始回放'); //开始回放
     }, []);
 
+    /**
+     * 移除静音状态
+     */
     const removeMuted = useCallback(function () {
+      console.log('removeMuted');
+
       setState((prevState) => ({
         ...prevState,
         mute: false,
       }));
     }, []);
 
+    /**
+     * 打开字幕类型
+     */
     const onOpenSubType = useCallback(function () {
       setState((prevState) => ({
         ...prevState,
@@ -232,6 +243,9 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       }));
     }, []);
 
+    /**
+     * 关闭字幕类型
+     */
     const onCloseSubType = useCallback(function () {
       setState((prevState) => ({
         ...prevState,
@@ -239,6 +253,12 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       }));
     }, []);
 
+    /**
+     * 对话框移动
+     * @param {Object} params - 移动参数
+     * @param {string} params.tag - 标签
+     * @param {string} params.e - 移动距离
+     */
     const onDialogMove = useCallback(
       function ({ tag, e }: { tag: string; e: string }) {
         if (state.commentVisible && tag === 'comment' && videoEl.current) {
@@ -249,6 +269,12 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       [state.commentVisible],
     );
 
+    /**
+     * 对话框移动结束
+     * @param {Object} params - 结束参数
+     * @param {string} params.tag - 标签
+     * @param {boolean} params.isClose - 是否关闭
+     */
     const onDialogEnd = useCallback(
       function ({ tag, isClose }: { tag: string; isClose: boolean }) {
         if (state.commentVisible && tag === 'comment') {
@@ -267,6 +293,10 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       [state.commentVisible],
     );
 
+    /**
+     * 打开评论
+     * @param {string} id - 视频ID
+     */
     const onOpenComments = useCallback(
       function (id: string) {
         if (id === item!.aweme_id) {
@@ -281,6 +311,9 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       [item],
     );
 
+    /**
+     * 关闭评论
+     */
     const onCloseComments = useCallback(
       function () {
         if (state.commentVisible) {
@@ -295,6 +328,13 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       [state.commentVisible],
     );
 
+    /**
+     * 点击事件处理
+     * @param {Object} params - 点击参数
+     * @param {string} params.uniqueId - 唯一ID
+     * @param {string} params.index - 索引
+     * @param {string} params.type - 事件类型
+     */
     const click = useCallback(
       function ({
         uniqueId,
@@ -305,7 +345,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
         index: string;
         type: EVENT_KEY_TYPE;
       }) {
-        console.log('click', uniqueId, index, type);
+        // console.log('click', uniqueId, index, type);
         if (position.uniqueId === uniqueId && position.index === index) {
           if (type === EVENT_KEY.ITEM_TOGGLE) {
             if (isLive) {
@@ -350,6 +390,9 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       [isLive, position.index, position.uniqueId, state.status, item.aweme_id],
     );
 
+    /**
+     * 播放视频
+     */
     function play() {
       setState((prevState) => ({
         ...prevState,
@@ -362,6 +405,9 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       }
     }
 
+    /**
+     * 暂停视频
+     */
     function pause() {
       setState((prevState) => ({
         ...prevState,
@@ -382,7 +428,6 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       bus.on(EVENT_KEY.CLOSE_COMMENTS, onCloseComments);
       bus.on(EVENT_KEY.OPEN_SUB_TYPE, onOpenSubType);
       bus.on(EVENT_KEY.CLOSE_SUB_TYPE, onCloseSubType);
-
       bus.on(EVENT_KEY.REMOVE_MUTED, removeMuted);
       return () => {
         //组件卸载时要关闭部分事件
@@ -407,7 +452,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
     ]);
 
     function touchStart(e: React.TouchEvent<HTMLDivElement>) {
-      e.stopPropagation();
+      _stopPropagation(e.nativeEvent);
       // setState((prevState) => ({
       //   ...prevState,
       //   start: { x: e.touches[0].pageX },
@@ -421,7 +466,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
     }
 
     function touchMove(e: React.TouchEvent<HTMLDivElement>) {
-      e.stopPropagation();
+      _stopPropagation(e.nativeEvent);
       setState((prevState) => ({ ...prevState, isMove: true }));
       pause();
       const dx = e.touches[0].pageX - progressState.start.x;
@@ -450,7 +495,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
     }
 
     function touchEnd(e: React.TouchEvent<HTMLDivElement>) {
-      e.stopPropagation();
+      _stopPropagation(e.nativeEvent); //传递原生事件
       if (isPlaying) return;
       // setTimeout(() => {}, 1000);
       setState((prevState) => ({
