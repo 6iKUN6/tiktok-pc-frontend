@@ -90,3 +90,13 @@ export function _duration(v: null | undefined | number) {
 
   return str;
 }
+
+/**
+ * 停止事件传播
+ * @param e 事件对象
+ */
+export function _stopPropagation(e: Event) {
+  e.stopImmediatePropagation();
+  e.stopPropagation();
+  e.preventDefault();
+}
