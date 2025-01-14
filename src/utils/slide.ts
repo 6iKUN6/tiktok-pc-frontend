@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 export interface SlideProps {
   children?: ReactNode; //要滚动的页面
   name?: string; //组件名称
-  index?: number; //当前下标
+  // index?: number; //当前下标
   updateIndex?: (i: number) => void;
   virtualTotal?: number; //页面中同时存在多少个SlideItem
   render?: (item: any, index: number, play: boolean, uniqueId: string) => ReactNode; //渲染函数
@@ -22,8 +22,8 @@ export interface SlideState {
   wrapper: { width: number; height: number; childrenLength: number }; //slide-list的宽度和子元素数量
   type: SlideType; //组件类型
   name: string; //组件名称
-  localIndex: number; //当前下标
-  prevIndex: number; //上一个视频的index
+  // localIndex: number; //当前下标
+  // prevIndex: number; //上一个视频的index
   needCheck: boolean; //是否需要检测，每次按下都需要检测，up事件会重置为true
   next: boolean; //能否滑动
   isDown: boolean; //是否按下，用于move事件判断
@@ -34,6 +34,8 @@ export enum SlideType {
   HORIZONTAL = 'horizontal', //水平滑动
   VERTICAL_INFINITE = 'vertical_infinite', //垂直无限滑动
 }
+
+export type CanNextCb = (isNext: boolean, index: number) => boolean;
 
 export function checkEvent(e: any) {
   const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
@@ -52,20 +54,18 @@ export function checkEvent(e: any) {
 }
 
 /**
- * 默认能否继续滑动
- * @param state
- * @param isNext 朝向，向右或向下
- * @returns {boolean}
+ * 检查是否可以继续滑动
+ * @param isNext 滑动方向，true为向右或向下，false为向左或向上
+ * @param index 当前索引
+ * @param listLength 列表长度
+ * @returns {boolean} 是否可以继续滑动
  */
-function canNext(state: SlideState, isNext: boolean): boolean {
-  return !(
-    (state.localIndex === 0 && !isNext) ||
-    (state.localIndex === state.wrapper.childrenLength - 1 && isNext)
-  );
-}
+// const canNext: CanNextCb = (isNext, index, listLength) => {
+//   return !((index === 0 && !isNext) || (index === listLength - 1 && isNext));
+// };
 
 //初始化信息，获取slide dom的长宽、子元素数量，用于move事件判断能否滑动
-export function slideInit(el: HTMLDivElement, state: SlideState) {
+export function slideInit(el: HTMLDivElement, state: SlideState, index: number) {
   // console.log('init-el.style', window.getComputedStyle(el, null)['width']);
   // state.wrapper.width = +el.style.width.replace('px', '');
   // state.wrapper.height = +el.style.height.replace('px', '');
@@ -75,7 +75,7 @@ export function slideInit(el: HTMLDivElement, state: SlideState) {
     state.wrapper.childrenLength = el.children.length;
 
     //获取偏移量
-    const t = getSliceOffset(state, el);
+    const t = getSliceOffset(state, el, index);
     // console.log('偏移量t', t);
     let dx1 = 0;
     let dx2 = 0;
@@ -161,13 +161,14 @@ export function slideTouchMove(
   e: React.PointerEvent<HTMLDivElement>,
   el: HTMLDivElement,
   state: SlideState,
-  canNextCb: ((state: SlideState, isNext: boolean) => boolean) | null = null,
+  index: number,
+  canNextCb: CanNextCb | null = null,
   notNextCb: (() => void) | null = null,
   slideOtherDirectionCb: (() => void) | null = null,
 ) {
   if (!checkEvent(e)) return;
   if (!state.isDown) return;
-  // console.log('slideTouchMove-state', state.isDown);
+  // console.log('slideTouchMove-state', index);
 
   //计算移动距离
   const x = e.pageX - state.start.x;
@@ -187,15 +188,19 @@ export function slideTouchMove(
   if (canSlideRes) {
     //如果传了就用，没传就用默认的
     //无限滑动组件，要特别判断，所以需要传canNextCb
-    if (!canNextCb) canNextCb = canNext;
-    // console.log(canNextCb(state, isNext));
-    if (canNextCb(state, isNext)) {
+
+    // if (!canNextCb) canNextCb = canNext;
+
+    // console.log('cannext--', canNextCb(isNext, index, state.wrapper.childrenLength));
+    // console.log('isNext', isNext);
+    // console.log('childrenLength', state.wrapper.childrenLength);
+    if (canNextCb!(isNext, index)) {
       window.isMoved = true;
       //能滑动，那就把事件捕获，不能给父组件处理
       e.stopPropagation();
       //   if (state.type === SlideType.HORIZONTAL) {
       //   }
-      const t = getSliceOffset(state, el) + (isNext ? state.judgeValue : -state.judgeValue);
+      const t = getSliceOffset(state, el, index) + (isNext ? state.judgeValue : -state.judgeValue);
       let dx1 = 0,
         dx2 = 0;
       if (state.type === SlideType.HORIZONTAL) {
@@ -219,14 +224,16 @@ export function slideTouchMove(
  * 处理滑动结束事件
  * @param e React.PointerEvent<HTMLDivElement> - 事件对象
  * @param state SlideState - 滑动状态对象
- * @param canNextCb ((state: SlideState, isNext: boolean) => boolean) | null - 判断是否能继续滑动的回调函数
+ * @param canNextCb (( isNext: boolean) => boolean) | null - 判断是否能继续滑动的回调函数
  * @param nextCb ((isNext: boolean) => void) | null - 滑动成功时的回调函数
  * @param notNextCb (() => void) | null - 滑动失败时的回调函数
  */
 export function slideTouchEnd(
   e: React.PointerEvent<HTMLDivElement>,
   state: SlideState,
-  canNextCb: ((state: SlideState, isNext: boolean) => boolean) | null = null,
+  index: number,
+  updatedIndex: (i: number) => void,
+  canNextCb: CanNextCb | null = null,
   nextCb: ((isNext: boolean) => void) | null = null,
   notNextCb: (() => void) | null = null,
 ) {
@@ -240,8 +247,8 @@ export function slideTouchEnd(
 
     //同move事件
     if (!canNextCb) canNextCb = canNext;
-    // console.log('end-canNext', canNextCb(state, isNext), isNext);
-    if (canNextCb(state, isNext)) {
+    console.log('end-canNext', canNextCb(isNext, index, state.wrapper.childrenLength));
+    if (canNextCb(isNext, index, state.wrapper.childrenLength)) {
       //结合时间、距离来判断是否成功滑动
       const endTime = Date.now();
       let gapTime = endTime - state.start.time;
@@ -262,12 +269,17 @@ export function slideTouchEnd(
       //3.若不在上述两种情况，则根据时间判断，时间越短，滑动越快，通过
       if (gapTime < 150) {
         if (isNext) {
-          state.prevIndex = state.localIndex; //保存上一个的index,再修改
-          state.localIndex++;
+          // state.prevIndex = state.localIndex; //保存上一个的index,再修改
+          // state.localIndex++;
+          // console.log('index+', index, index + 1);
+
+          updatedIndex(index + 1);
           // console.log('flag-3');
         } else {
-          state.prevIndex = state.localIndex; //保存上一个的index,再修改
-          state.localIndex--;
+          // state.prevIndex = state.localIndex; //保存上一个的index,再修改
+          // state.localIndex--;
+          // console.log('index+', index, index--);
+          updatedIndex(index - 1);
           // console.log('flag-4');
         }
 
@@ -294,12 +306,13 @@ export function slideReset(
   e: React.PointerEvent<HTMLDivElement>,
   el: HTMLDivElement,
   state: SlideState,
+  index: number,
   // emit: any = null,
-  updateIndex: (index: number) => void,
+  // updateIndex: (index: number) => void,
 ) {
   if (!checkEvent(e)) return;
   el.style.transitionDuration = '300ms';
-  const t = getSliceOffset(state, el);
+  const t = getSliceOffset(state, el, index);
   let dx1 = 0,
     dx2 = 0;
   if (state.type === SlideType.HORIZONTAL) {
@@ -315,17 +328,18 @@ export function slideReset(
   state.needCheck = true;
   state.isDown = false;
   state.next = false;
+  // console.log('reset-call', state);
+
   setTimeout(() => {
     window.isMoved = false;
   }, 200);
   //更新localindex
-  // emit?.('update:index', state.localIndex);
-  updateIndex(state.localIndex);
+  // updateIndex(index);
 }
 
 //根据当前index，获取slide偏移距离
 //如果每个页面的宽度是相同均为100%，只需要当前index * wrapper的宽（高）度即可： -state.localIndex * state.wrapper.width
-export function getSliceOffset(state: SlideState, el: HTMLDivElement): number {
+export function getSliceOffset(state: SlideState, el: HTMLDivElement, index: number): number {
   // console.log('state', state);
 
   //横竖逻辑基本相同
@@ -336,7 +350,7 @@ export function getSliceOffset(state: SlideState, el: HTMLDivElement): number {
     });
 
     //取0到当前index的的子元素宽度
-    widths = widths.slice(0, state.localIndex);
+    widths = widths.slice(0, index);
     if (widths.length) {
       return -widths.reduce((a, b) => a + b, 0);
     }
@@ -345,13 +359,13 @@ export function getSliceOffset(state: SlideState, el: HTMLDivElement): number {
   } else {
     //VERTICAL_INFINITE列表只需要计算index*wrapper的高度即可
     if (state.type === SlideType.VERTICAL_INFINITE) {
-      return -state.localIndex * state.wrapper.height;
+      return -index * state.wrapper.height;
     } else {
       let heights: number[] = [];
       Array.from(el.children).map((item) => {
         heights.push(item.getBoundingClientRect().height);
       });
-      heights = heights.slice(0, state.localIndex);
+      heights = heights.slice(0, index);
       // console.log('heights', heights);
 
       if (heights.length) return -heights.reduce((a, b) => a + b);

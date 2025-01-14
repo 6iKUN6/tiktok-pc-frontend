@@ -401,7 +401,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       if (videoEl.current) {
         videoEl.current.volume = 1;
         videoEl.current.play();
-        console.log('play-called');
+        // console.log('play-called');
       }
     }
 
@@ -415,7 +415,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
       }));
       if (videoEl.current) {
         videoEl.current.pause();
-        console.log('pause-called');
+        // console.log('pause-called');
       }
     }
 

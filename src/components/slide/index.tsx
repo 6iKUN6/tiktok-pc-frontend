@@ -12,9 +12,11 @@ import {
   slideReset,
   slideInit,
   getSliceOffset,
+  CanNextCb,
 } from '@/utils/slide';
 import bus, { EVENT_KEY } from '@/utils/bus';
 import { _stopPropagation } from '@/utils';
+import { useVideoStore } from '@/store';
 
 type Option = 'next' | 'prev';
 //页面中同时存在多少个SliceItem
@@ -25,12 +27,12 @@ const realDomMap = new Map<number, Element>();
 const Slide: FC<SlideProps> = ({
   children,
   name,
-  index = -1,
+  // index = -1,
   virtualTotal = 5,
   render = () => null,
   list = [],
   onLoadMore,
-  updateIndex,
+  // updateIndex,
   uniqueId,
   // active = false,
   // loading = false,
@@ -40,14 +42,16 @@ const Slide: FC<SlideProps> = ({
   //   console.log('list', list);
   // }, [list]);
 
+  const { currIndex, prevIndex, updatedIndex, reSetIndex, getCurrentIndexSync } = useVideoStore();
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SlideState>({
     judgeValue: 20, //一个用于判断滑动朝向的固定值
     type: SlideType.VERTICAL_INFINITE, //组件类型
     name: name || '',
 
-    localIndex: index, //当前下标
-    prevIndex: -1, //上一个视频的index，初始化负一，防止初始化触发stop
+    // localIndex: index, //当前下标
+    // prevIndex: -1, //上一个视频的index，初始化负一，防止初始化触发stop
 
     needCheck: true, //是否需要检测，每次按下都需要检测，up事件会重置为true
     next: false, //能否滑动
@@ -58,35 +62,35 @@ const Slide: FC<SlideProps> = ({
   });
 
   useEffect(() => {
-    bus.emit(EVENT_KEY.CURRENT_ITEM, list[index]); //当前item
+    bus.emit(EVENT_KEY.CURRENT_ITEM, list[currIndex]); //当前item
     bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
       //监听index变化，控制暂停或播放视频
       uniqueId: uniqueId,
-      index: index,
+      index: currIndex,
       type: EVENT_KEY.ITEM_PLAY,
     });
     setTimeout(() => {
       bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
         uniqueId: uniqueId,
-        index: stateRef.current.prevIndex,
+        index: prevIndex,
         type: EVENT_KEY.ITEM_STOP,
       });
     }, 200);
 
-    console.log(`%cindex:${index};localIndex:${stateRef.current.localIndex}`, 'color:red');
-  }, [index, list, uniqueId]);
+    console.log(`%ccurrIndex:${currIndex};prevIndex:${prevIndex}`, 'color:skyblue');
+  }, [currIndex, prevIndex, list, uniqueId]);
 
   useEffect(() => {
     const calculateOffset = () => {
       if (wrapperRef.current) {
-        slideInit(wrapperRef.current, stateRef.current);
+        slideInit(wrapperRef.current, stateRef.current, currIndex);
       }
     };
 
     // 异步计算偏移量
     const timer = setTimeout(calculateOffset, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [currIndex]);
 
   const touchStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -99,7 +103,8 @@ const Slide: FC<SlideProps> = ({
     e.preventDefault();
     if (!wrapperRef.current) return;
     // console.log('touchMove');
-    slideTouchMove(e, wrapperRef.current, stateRef.current, canNext);
+    const currIndex = getCurrentIndexSync();
+    slideTouchMove(e, wrapperRef.current, stateRef.current, currIndex, canNext);
   };
 
   const touchEnd = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -114,7 +119,8 @@ const Slide: FC<SlideProps> = ({
     //   emit('refresh');
     // }
     // console.log('touchEnd');
-    slideTouchEnd(e, stateRef.current, canNext, (isNext) => {
+    const currIndex = getCurrentIndexSync();
+    slideTouchEnd(e, stateRef.current, currIndex, updatedIndex, canNext, (isNext) => {
       // const half = parseInt((virtualTotal / 2).toString());
       if (list.length > virtualTotal) {
         //手指往上滑(即列表展示下一条视频)
@@ -127,24 +133,23 @@ const Slide: FC<SlideProps> = ({
       }
     });
     //每次滑动结束，重置状态
-    slideReset(e, wrapperRef.current, stateRef.current, updateIndex!);
+    slideReset(e, wrapperRef.current, stateRef.current, currIndex);
   };
 
-  function swipeItem(option: Option) {
+  function swipeItem(type: Option) {
     const half = parseInt((virtualTotal / 2).toString());
-    if (option === 'next') {
+    const currIndex = getCurrentIndexSync();
+    console.log(`currIndex:${type}`, currIndex);
+    if (type === 'next') {
       //删除最前面的 `dom` ，然后在最后面添加一个 `dom`
-      if (
-        stateRef.current.localIndex > list.length - virtualTotal &&
-        stateRef.current.localIndex > half
-      ) {
+      if (currIndex > list.length - virtualTotal && currIndex > half) {
         onLoadMore?.(); //到底了就loadmore
       }
 
       //是否符合 `腾挪` 的条件
-      if (stateRef.current.localIndex > half && stateRef.current.localIndex < list.length - half) {
+      if (currIndex > half && currIndex < list.length - half) {
         //在最后面添加一个 `dom`
-        const addItemIndex = stateRef.current.localIndex + half;
+        const addItemIndex = currIndex + half;
         const res = wrapperRef.current?.querySelector(
           `.${itemClassName}[data-index='${addItemIndex}']`,
         );
@@ -160,16 +165,13 @@ const Slide: FC<SlideProps> = ({
 
         wrapperRef.current?.querySelectorAll(`.${itemClassName}`).forEach((item) => {
           (item as HTMLElement).style['top'] =
-            (stateRef.current.localIndex - half) * stateRef.current.wrapper.height + 'px';
+            (currIndex - half) * stateRef.current.wrapper.height + 'px';
         });
       }
     } else {
       //删除最后面的 `dom` ，然后在最前面添加一个 `dom`
-      if (
-        stateRef.current.localIndex >= half &&
-        stateRef.current.localIndex < list.length - (half + 1)
-      ) {
-        const addIndex = stateRef.current.localIndex - half;
+      if (currIndex >= half && currIndex < list.length - (half + 1)) {
+        const addIndex = currIndex - half;
         if (addIndex >= 0) {
           const res = wrapperRef.current?.querySelector(
             `.${itemClassName}[data-index='${addIndex}']`,
@@ -186,7 +188,7 @@ const Slide: FC<SlideProps> = ({
 
         wrapperRef.current?.querySelectorAll(`.${itemClassName}`).forEach((item) => {
           (item as HTMLElement).style['top'] =
-            (stateRef.current.localIndex - half) * stateRef.current.wrapper.height + 'px';
+            (currIndex - half) * stateRef.current.wrapper.height + 'px';
         });
       } else {
         console.log('上划---无元素增减');
@@ -236,12 +238,10 @@ const Slide: FC<SlideProps> = ({
     [render, uniqueId],
   );
 
-  function canNext(state: SlideState, isNext: boolean) {
-    return !(
-      (state.localIndex === 0 && !isNext) ||
-      (state.localIndex === list.length - 1 && isNext)
-    );
-  }
+  const canNext: CanNextCb = (isNext, index) => {
+    // console.log('run-canNext', isNext, index);
+    return !((index === 0 && !isNext) || (index === list.length - 1 && isNext));
+  };
 
   const insertContent = useCallback(
     function () {
@@ -251,8 +251,10 @@ const Slide: FC<SlideProps> = ({
       const half = parseInt((virtualTotal / 2).toString()); //虚拟列表的一半
       //因为我们只渲染 virtualTotal 条数据到dom中，并且当前index有可能不是0，所以需要计算出起始下标和结束下标
       let start = 0;
-      if (stateRef.current.localIndex > half) {
-        start = stateRef.current.localIndex - half;
+      const currIndex = getCurrentIndexSync();
+
+      if (currIndex > half) {
+        start = currIndex - half;
       }
 
       let end = start + virtualTotal;
@@ -263,22 +265,22 @@ const Slide: FC<SlideProps> = ({
 
       if (start < 0) start = 0;
       list.slice(start, end).map((item, index) => {
-        const el = getInsEl(item, start + index, start + index === stateRef.current.localIndex);
+        const el = getInsEl(item, start + index, start + index === currIndex);
         wrapperRef.current!.appendChild(el);
       });
       //设置偏移量
       if (wrapperRef.current) {
         wrapperRef.current.style['transform'] =
-          `translate3d(0px,${getSliceOffset(stateRef.current, wrapperRef.current)}px,  0px)`;
+          `translate3d(0px,${getSliceOffset(stateRef.current, wrapperRef.current, currIndex)}px,  0px)`;
       }
 
       //因为index有可能不是0，所以要设置Item的top偏移量
-      if (stateRef.current.localIndex > 2 && list.length > 5) {
+      if (currIndex > 2 && list.length > 5) {
         const list = wrapperRef.current?.querySelectorAll(`.${itemClassName}`);
         list?.forEach((item) => {
-          if (list.length - stateRef.current.localIndex > 2) {
+          if (list.length - currIndex > 2) {
             (item as HTMLElement).style['top'] =
-              (stateRef.current.localIndex - 2) * stateRef.current.wrapper.height + 'px';
+              (currIndex - 2) * stateRef.current.wrapper.height + 'px';
           } else {
             (item as HTMLElement).style['top'] = start * stateRef.current.wrapper.height + 'px';
           }
@@ -287,16 +289,17 @@ const Slide: FC<SlideProps> = ({
 
       stateRef.current.wrapper.childrenLength = wrapperRef.current!.children.length;
 
-      bus.emit(EVENT_KEY.CURRENT_ITEM, list[stateRef.current.localIndex]);
+      bus.emit(EVENT_KEY.CURRENT_ITEM, list[currIndex]);
     },
-    [virtualTotal, list, getInsEl],
+    [virtualTotal, list, getInsEl, getCurrentIndexSync],
     //为什么不用Array.prototype.map来生成子元素？，然后操作list来增减item
   );
 
   useEffect(() => {
     const oldList = stateRef.current.wrapper.childrenLength;
     if (list.length < oldList) {
-      stateRef.current.localIndex = 0;
+      // stateRef.current.localIndex = 0;
+      reSetIndex();
       insertContent();
     } else {
       //没数据就直接插入
@@ -310,7 +313,7 @@ const Slide: FC<SlideProps> = ({
         // 用户往下滑动时只删除前面多余的dom，等滑动到临界值（virtualTotal/2+1）时，再去执行新增逻辑
       }
     }
-  }, [list, insertContent]);
+  }, [list, insertContent, reSetIndex]);
 
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -332,7 +335,7 @@ const Slide: FC<SlideProps> = ({
     _stopPropagation(e.nativeEvent);
     bus.emit(EVENT_KEY.SINGLE_CLICK_BROADCAST, {
       uniqueId: uniqueId,
-      index: stateRef.current.localIndex,
+      index: currIndex,
       type: EVENT_KEY.ITEM_TOGGLE,
     });
   };

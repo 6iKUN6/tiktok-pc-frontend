@@ -1,75 +1,75 @@
 import { Layout } from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef } from 'react';
 
-// import VideoPlayer from '@/components/videoPlayer';
 import Slide from '@/components/slide';
 import './index.scss';
 import { getRecommendedVideos } from '@/services/apis';
 import { slideItemRender } from '@/utils';
-
-// import { HttpStatus } from '@/utils/constant';
+import { useVideoStore } from '@/store';
 
 const { Content } = Layout;
 
 const ContentComp: FC = () => {
-  // const TestRender: any = ({ backgroundColor, url }: any) => (
-  //   <div style={{ backgroundColor, width: '100%', height: '100%' }}>
-  //     <video src={url}></video>
-  //   </div>
-  // );
-
-  const [list, setList] = useState([]);
-  const pageStateRef = useRef({
-    pageNo: 1,
+  const { list, setList, pageIndex, total, currentSize, setPage } = useVideoStore();
+  const isMounted = useRef(false);
+  const pagination = useRef({
+    pageIndex: 0,
     pageSize: 10,
-    totalSize: 0,
+    total: 0,
     currentSize: 0,
   });
+  // useEffect(() => {
+  //   console.log('list', list);
+  // }, [list]);
 
   const render = slideItemRender({});
 
-  const getData = useCallback(function getData(refresh = false) {
-    const { totalSize, pageNo, pageSize, currentSize } = pageStateRef.current;
-    if (!refresh && totalSize === currentSize) return;
-    getRecommendedVideos({
-      page: pageNo,
-      pageSize: pageSize,
-    }).then((res) => {
-      // console.log('res', res);
-      if (res.success) {
-        setList((prevState) => prevState.concat(res.data.list));
-      } else {
-        console.error('request error:', res.success);
-      }
-    });
-  }, []);
+  const getData = useCallback(
+    function getData(refresh = false) {
+      if (!refresh && total === currentSize) return;
+      pagination.current.pageIndex = pageIndex + 1;
+      getRecommendedVideos({
+        page: pagination.current.pageIndex,
+        pageSize: pagination.current.pageSize,
+      }).then((res) => {
+        if (res.success) {
+          const newList = res.data.list;
+          // console.log('f-nl:', newList);
+
+          setList(newList);
+          pagination.current.total = res.data.total;
+
+          setPage(
+            pagination.current.pageSize,
+            pagination.current.pageIndex,
+            pagination.current.total,
+            currentSize + newList.length,
+          );
+        } else {
+          console.error('request error:', res.success);
+        }
+      });
+    },
+    [setList, setPage, currentSize, pageIndex, total],
+  );
 
   useEffect(() => {
-    pageStateRef.current.currentSize = list.length;
-  }, [list.length]);
-
-  useEffect(() => {
-    getData(true);
+    //什么沙雕写法，能不能优化(不用isMounted会内存泄漏和死循环)
+    if (!isMounted.current) {
+      getData(true);
+      isMounted.current = true;
+    }
   }, [getData]);
-
-  const [index, setIndex] = useState<number>(0); //这个index需要和外部双向绑定
-
-  function updateIndex(newIndex: number) {
-    setIndex(newIndex);
-  }
 
   return (
     <Content className="content-box">
       <div className="body">
-        {/* <VideoPlayer videos={videos} /> */}
         <Slide
           name="slide-comp"
           list={list}
-          onLoadMore={() => {}}
+          onLoadMore={() => getData()}
           uniqueId={'ikun'}
-          index={index}
           render={render}
-          updateIndex={updateIndex}
         ></Slide>
       </div>
     </Content>
