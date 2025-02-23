@@ -512,6 +512,13 @@ const BaseVideo: FC<BaseVideoProps> = memo(
     return (
       <VideoCtx.Provider value={provide}>
         <div className={`video-wrapper ${positionName}`} ref={videoWrapper}>
+          <div
+            className="absolute inset-0 -z-[1] scale-110 blur-[30px]"
+            style={{
+              backgroundImage: `url(${poster})`,
+            }}
+          />
+          {/* 模糊背景 */}
           {state.loading && <Loading style={{ position: 'absolute' }} />}
           <video
             className="video"
@@ -555,7 +562,7 @@ const BaseVideo: FC<BaseVideoProps> = memo(
                           <img className="avatar" src="src/assets/img/head-image.jpeg" alt="ikun" />
                           <div className="right">
                             <p>
-                              <span className="name">杨润才</span>
+                              <span className="name">杨🐔才</span>
                               <span className="time">2024-12-12</span>
                             </p>
                             <p className="text">北京</p>
